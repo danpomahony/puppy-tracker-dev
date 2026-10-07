@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { pb } from './lib/pb'
 import { eventDefs, defFor } from './events/registry'
-import { missingChoice, newId } from './events/types'
+import { missingChoice } from './events/types'
 import type { EventDef, EventRecord } from './events/types'
-import { ago, dayTime, nowIso, toDate, useNow } from './lib/time'
+import { ago, dayTime, toDate, useNow } from './lib/time'
+import { useEvents } from './lib/useEvents'
 import EditSheet from './EditSheet'
 import './home.css'
 
@@ -19,67 +20,21 @@ const tiles: { label: string; match: (e: EventRecord) => boolean }[] = [
 ]
 
 export default function Home() {
-  const [dog, setDog] = useState<{ id: string; name: string } | null>(null)
-  const [loaded, setLoaded] = useState(false)
-  const [events, setEvents] = useState<EventRecord[]>([])
+  const { dog, events, loaded, problem, log: logEvent, reload } = useEvents()
   const [picking, setPicking] = useState<EventDef | null>(null)
   const [editing, setEditing] = useState<EventRecord | null>(null)
   const [chosen, setChosen] = useState<Record<string, boolean>>({})
-  const [problem, setProblem] = useState('')
   const now = useNow()
   const hint = picking ? missingChoice(picking, chosen) : ''
 
-  const load = useCallback(async () => {
-    try {
-      const [dogs, evs] = await Promise.all([
-        pb.collection('dogs').getList(1, 1, { requestKey: null }),
-        pb.collection('events').getList<EventRecord>(1, 200, {
-          sort: '-started_at',
-          expand: 'logged_by',
-          requestKey: null,
-        }),
-      ])
-      const d = dogs.items[0]
-      setDog(d ? { id: d.id, name: d.name } : null)
-      setEvents(evs.items)
-      setProblem('')
-      setLoaded(true)
-    } catch {
-      setProblem("Couldn't load entries. Check that the backend is running.")
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-    // Realtime: reload whenever anyone in the family logs something.
-    pb.collection('events').subscribe('*', load)
-    return () => {
-      pb.collection('events').unsubscribe('*')
-    }
-  }, [load])
-
-  async function log(def: EventDef, data: Record<string, boolean>) {
-    if (!dog) return
+  function log(def: EventDef, data: Record<string, boolean>) {
     setPicking(null)
-    try {
-      await pb.collection('events').create({
-        id: newId(),
-        dog: dog.id,
-        type: def.type,
-        started_at: nowIso(),
-        logged_by: pb.authStore.record?.id,
-        data,
-        v: 1,
-      })
-      await load()
-    } catch {
-      setProblem("Couldn't save that. Check the connection and try again.")
-    }
+    void logEvent(def.type, data)
   }
 
   function tap(def: EventDef) {
     if (def.toggles.length === 0) {
-      void log(def, {})
+      log(def, {})
       return
     }
     setChosen({})
@@ -106,7 +61,7 @@ export default function Home() {
           onSubmit={(e) => {
             e.preventDefault()
             // Always send every toggle, so "nothing happened" is saved as false, not missing.
-            void log(picking, Object.fromEntries(picking.toggles.map((t) => [t.key, !!chosen[t.key]])))
+            log(picking, Object.fromEntries(picking.toggles.map((t) => [t.key, !!chosen[t.key]])))
           }}
         >
           <h2>{picking.label}</h2>
@@ -160,7 +115,7 @@ export default function Home() {
         ))}
       </ul>
 
-      {editing && <EditSheet key={editing.id} event={editing} onClose={() => setEditing(null)} onSaved={load} />}
+      {editing && <EditSheet key={editing.id} event={editing} onClose={() => setEditing(null)} onSaved={reload} />}
 
       <p className="muted">Signed in as {pb.authStore.record?.email}</p>
       <button className="quiet" onClick={() => pb.authStore.clear()}>
