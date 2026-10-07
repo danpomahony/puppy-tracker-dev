@@ -47,13 +47,13 @@ You need Docker and Node.js.
 3. Check your changes:
 
    ```sh
-   cd app && npm run lint && npm run build
+   npm --prefix app run lint && npm --prefix app run build
    PB_SUPERUSER_EMAIL=<superuser email> ./scripts/smoke-test.sh   # prompts for the password
    ```
 
 ## Status and plans
 
-The MVP is working: login, logging, the safety sign, the Log and History tabs, and editing entries. Work is tracked in GitHub Issues and a Projects board (see [workflow](docs/workflow.md)). Next up:
+The MVP is working: login, logging feeds, outside trips and accidents, a worksite-style "days since last accident" sign, the Log and History tabs, and editing entries. Work is tracked in GitHub Issues and a Projects board (see [workflow](docs/workflow.md)). Next up:
 
 - HTTPS, so the app can be installed as a PWA and work offline
 - Production infrastructure as code, with a reverse proxy and TLS, tested backups, monitoring and deploys from CI

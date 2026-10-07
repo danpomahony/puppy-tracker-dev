@@ -5,6 +5,8 @@ Date: 2026-10-08
 
 ## Context
 
+The driving requirement: **add another data point without breaking the data points already added in the MVP.** Everything below follows from it.
+
 The app records everything that happens to the puppy: feeds, outside trips, accidents, and later sleep, walks, training practice and vet visits. The questions we want to answer, such as the typical gap between outside trips or the best window after a meal, are all calculated from *when* things happened (see "Questions the data must be able to answer" in `docs/data-model.md`).
 
 Constraints that shape the decision:
@@ -33,18 +35,28 @@ Good:
 
 Costs:
 
-- The database does not validate `data`. A typo in a key is stored without complaint. The app's event modules are the only validation, and TypeScript only helps inside the app.
+- The database does not enforce the shape of `data`. A typo in a key is stored without complaint. Validation lives in the app's event modules (and in a Go backend, if one is built), and TypeScript only helps inside the app.
+- `type` is plain text, so the database does not catch a typo in it either.
+- There are no per-type access rules. Anyone who can write events can write any type.
 - Querying inside `data` is less convenient than querying a real column. This is acceptable because the questions we ask are mostly about `type` and time, and the same key names are reused across types (`pee` and `tiko` on both `outside` and `accident`) so one query can span them.
 - The rule "never change a field" means mistakes stay in the schema. We accept some clutter in exchange for never needing a data migration.
 - A `dog` link on every event is slightly redundant while there is one dog.
 
 ## Alternatives considered
 
-> Drafted from `docs/data-model.md` and general reasoning, not from a record of the original discussion. Please correct it if the real reasons differed.
+**A collection per event type** (feeds, outside trips, accidents). Rejected: every new type (sleep, walks, play, practice) would need a new collection and a migration, and questions like "how long after a feed do accidents happen?" would have to combine several collections. One list with a shared shape keeps those queries and the offline sync code simple.
 
-- **One collection per event type** (`feeds`, `outings`, `accidents`). This gives proper columns and database-level validation. Rejected because every new type would need a migration and a deploy, and the timeline and cross-type queries would need several requests merged on the client.
-- **One wide table with a column for every possible detail.** Rejected because most columns would be empty for most rows, and each new detail would still need a schema change.
-- **No `dogs` collection, with a single hard-coded dog.** Simpler today. Rejected because adding the link later would mean backfilling every event, the kind of change this model is designed to avoid.
+**One wide table** with a nullable column for every possible detail. Rejected: every new detail would be a schema migration, and most columns would be empty on most rows. This conflicts with the requirement that new data points can be added without touching existing ones.
+
+**No `dogs` collection.** Rejected: adding a `dog` link later would mean backfilling every existing event. It is cheap to include now.
+
+**`type` as a database select field.** Rejected: adding a type would then need a migration. `type` is plain text, validated by the app's event registry.
+
+**Separate pee and tiko events linked to an outside trip.** Considered, not chosen. This was an alternative raised by Claude while designing the model, and it was not weighed in depth in the original discussion. `pee` and `tiko` are flags on the trip (and on accidents, with the same names), which keeps one record per trip and makes "trips with a result" a simple filter. The cost is that several pees in one trip are recorded once. A `pee_count` can be added later without breaking anything.
+
+**Required timing for outside trips.** Rejected in favour of an optional `ended_at`: one tap stays the default, and timing is there when wanted.
+
+Hosted backends (Supabase, Firebase) and native apps are out of scope here. They belong in a separate ADR about the overall stack.
 
 ## Related
 
