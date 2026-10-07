@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { pb } from './lib/pb'
 import { eventDefs, defFor } from './events/registry'
 import { missingChoice } from './events/types'
@@ -27,6 +27,15 @@ export default function Home() {
   const [chosen, setChosen] = useState<Record<string, boolean>>({})
   const now = useNow()
   const hint = picking ? missingChoice(picking, chosen) : ''
+  const pickerRef = useRef<HTMLFormElement>(null)
+
+  // When the picker opens, bring it fully into view (like the edit sheet does) so
+  // its choices and Save button aren't hidden below the bottom of the screen.
+  // When it closes, by Save or Cancel, go back to the top to see the sign and tiles.
+  useEffect(() => {
+    if (picking) pickerRef.current?.scrollIntoView({ block: 'center' })
+    else window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [picking])
 
   function log(def: EventDef, data: Record<string, boolean>) {
     setPicking(null)
@@ -60,6 +69,7 @@ export default function Home() {
       {picking && (
         <form
           className="sheet"
+          ref={pickerRef}
           onSubmit={(e) => {
             e.preventDefault()
             // Always send every toggle, so "nothing happened" is saved as false, not missing.
