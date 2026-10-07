@@ -97,7 +97,7 @@ These are the acceptance tests for the model. All are calculated from timestamps
 
 1. **Add, never change.** New optional fields, new event types and new collections are always fine.
 2. **Never rename, remove or repurpose a field.** If a field turns out to be wrong, stop writing it and keep reading it.
-3. **Readers must be tolerant.** A missing field means "unknown". An unknown event type is shown as a generic row.
+3. **Readers must be tolerant.** A missing field, null, and an empty string (PocketBase returns "" for empty optional fields such as ended_at) all mean "unknown". An unknown event type is shown as a generic row.
 4. **Schema changes go through migrations** committed in `backend/pb_migrations/`.
 5. **One module per event type** in `app/src/events/`, defining its label, form, validation and display. Adding a type means adding one module.
 
