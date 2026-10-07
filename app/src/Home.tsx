@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useState } from 'react'
 import { pb } from './lib/pb'
 import { eventDefs, defFor } from './events/registry'
-import { newId } from './events/types'
+import { missingChoice, newId } from './events/types'
 import type { EventDef, EventRecord } from './events/types'
-import { ago, nowIso, toDate, useNow } from './lib/time'
+import { ago, dayTime, nowIso, toDate, useNow } from './lib/time'
 import EditSheet from './EditSheet'
 import './home.css'
+
+// Pee and tiko count wherever they happened: outside or as an accident.
+const toileting = (e: EventRecord) => e.type === 'outside' || e.type === 'accident'
 
 const tiles: { label: string; match: (e: EventRecord) => boolean }[] = [
   { label: 'Fed', match: (e) => e.type === 'feed' },
   { label: 'Outside', match: (e) => e.type === 'outside' },
-  { label: 'Pee outside', match: (e) => e.type === 'outside' && e.data?.pee === true },
-  { label: 'Tiko outside', match: (e) => e.type === 'outside' && e.data?.tiko === true },
+  { label: 'Pee', match: (e) => toileting(e) && e.data?.pee === true },
+  { label: 'Tiko', match: (e) => toileting(e) && e.data?.tiko === true },
   { label: 'Accident', match: (e) => e.type === 'accident' },
 ]
 
@@ -24,6 +27,7 @@ export default function Home() {
   const [chosen, setChosen] = useState<Record<string, boolean>>({})
   const [problem, setProblem] = useState('')
   const now = useNow()
+  const hint = picking ? missingChoice(picking, chosen) : ''
 
   const load = useCallback(async () => {
     try {
@@ -116,7 +120,10 @@ export default function Home() {
               {t.label}
             </label>
           ))}
-          <button type="submit">Save</button>
+          {hint && <p className="muted">{hint}</p>}
+          <button type="submit" disabled={!!hint}>
+            Save
+          </button>
           <button type="button" className="quiet" onClick={() => setPicking(null)}>
             Cancel
           </button>
@@ -146,7 +153,7 @@ export default function Home() {
                 <small>{e.expand?.logged_by?.name ?? ''}</small>
               </span>
               <time dateTime={e.started_at}>
-                {toDate(e.started_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                {dayTime(toDate(e.started_at), now)}
               </time>
             </button>
           </li>

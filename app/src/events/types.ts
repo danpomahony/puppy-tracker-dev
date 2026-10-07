@@ -17,6 +17,7 @@ export interface EventDef {
   type: string
   label: string // button text
   toggles: { key: string; label: string }[] // yes/no details; none = log instantly
+  atLeastOne?: boolean // at least one toggle must be ticked before saving
   summary: (data: Record<string, unknown> | null) => string
 }
 
@@ -33,4 +34,11 @@ export function outcome(data: Record<string, unknown> | null): string {
   if (data?.pee) parts.push('pee')
   if (data?.tiko) parts.push('tiko')
   return parts.length ? parts.join(' and ') : 'nothing'
+}
+
+// The hint shown while an atLeastOne event has nothing ticked, e.g. "Choose pee, tiko or both."
+export function missingChoice(def: EventDef, chosen: Record<string, boolean>): string {
+  if (!def.atLeastOne || def.toggles.some((t) => chosen[t.key])) return ''
+  const names = def.toggles.map((t) => t.label.toLowerCase())
+  return `Choose ${names.length === 2 ? `${names[0]}, ${names[1]} or both` : names.join(' or ')}.`
 }
