@@ -64,16 +64,3 @@ h2 {
   margin: 0;
   font-weight: 600;
 }
-
-.recent {
-  list-style: none;
-  margin: 0 0 2rem;
-  padding: 0;
-}
-
-.recent li {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--line);
-}

@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { pb } from './lib/pb'
-import { eventDefs, defFor } from './events/registry'
+import { eventDefs } from './events/registry'
 import { missingChoice } from './events/types'
 import type { EventDef, EventRecord } from './events/types'
-import { ago, dayTime, toDate, useNow } from './lib/time'
-import { useEvents } from './lib/useEvents'
-import EditSheet from './EditSheet'
+import { pb } from './lib/pb'
+import { ago, toDate, useNow } from './lib/time'
+import type { Dog } from './lib/useEvents'
 import SafetySign from './SafetySign'
 import './home.css'
 
@@ -20,10 +19,17 @@ const tiles: { label: string; match: (e: EventRecord) => boolean }[] = [
   { label: 'Accident', match: (e) => e.type === 'accident' },
 ]
 
-export default function Home() {
-  const { dog, events, lastAccident, loaded, problem, log: logEvent, reload } = useEvents()
+interface Props {
+  dog: Dog | null
+  events: EventRecord[]
+  lastAccident: EventRecord | null
+  loaded: boolean
+  log: (type: string, data: Record<string, unknown>) => Promise<void>
+}
+
+// The Log tab: the safety sign, the log buttons and the "time since" tiles.
+export default function Home({ dog, events, lastAccident, loaded, log: logEvent }: Props) {
   const [picking, setPicking] = useState<EventDef | null>(null)
-  const [editing, setEditing] = useState<EventRecord | null>(null)
   const [chosen, setChosen] = useState<Record<string, boolean>>({})
   const now = useNow()
   const hint = picking ? missingChoice(picking, chosen) : ''
@@ -52,9 +58,8 @@ export default function Home() {
   }
 
   return (
-    <main>
+    <>
       <h1>{dog?.name ?? 'Puppy tracker'}</h1>
-      {problem && <p className="error">{problem}</p>}
       {loaded && !dog && <p>No dog added yet. Add one in the PocketBase dashboard.</p>}
       {loaded && dog && <SafetySign since={lastAccident && toDate(lastAccident.started_at)} now={now} />}
 
@@ -110,30 +115,11 @@ export default function Home() {
         })}
       </dl>
 
-      <h2>Recent</h2>
-      <ul className="recent">
-        {events.slice(0, 8).map((e) => (
-          <li key={e.id}>
-            <button className="row" onClick={() => setEditing(e)}>
-              <span>
-                {defFor(e.type).summary(e.data)}
-                <small>{e.expand?.logged_by?.name ?? ''}</small>
-              </span>
-              <time dateTime={e.started_at}>
-                {dayTime(toDate(e.started_at), now)}
-              </time>
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      {editing && <EditSheet key={editing.id} event={editing} onClose={() => setEditing(null)} onSaved={reload} />}
-
       <p className="muted">Signed in as {pb.authStore.record?.email}</p>
       <button className="quiet" onClick={() => pb.authStore.clear()}>
         Sign out
       </button>
-    </main>
+    </>
   )
 }
 

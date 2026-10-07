@@ -17,16 +17,18 @@ export function ago(ms: number): string {
   return `${d} day${d === 1 ? '' : 's'} ago`
 }
 
-// When an entry happened, for lists: "3:05 pm" today, "Yesterday 3:05 pm",
-// "Mon 3:05 pm" within the last week, then "7 Oct 3:05 pm".
-export function dayTime(d: Date, now: number): string {
-  const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+// The time of day an entry happened, for example "3:05 pm".
+export const timeOfDay = (d: Date) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+
+// The heading for one day of entries: "Today", "Yesterday", "Monday" within the
+// last week, then "Mon 28 Sep".
+export function dayLabel(d: Date, now: number): string {
   const startOfDay = (t: number) => new Date(t).setHours(0, 0, 0, 0)
   const days = Math.round((startOfDay(now) - startOfDay(d.getTime())) / 86_400_000)
-  if (days <= 0) return time
-  if (days === 1) return `Yesterday ${time}`
-  if (days < 7) return `${d.toLocaleDateString([], { weekday: 'short' })} ${time}`
-  return `${d.toLocaleDateString([], { day: 'numeric', month: 'short' })} ${time}`
+  if (days <= 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  if (days < 7) return d.toLocaleDateString([], { weekday: 'long' })
+  return d.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
 // Re-renders the component every `ms` milliseconds with the current time.
