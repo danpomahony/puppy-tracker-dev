@@ -4,6 +4,7 @@ import { eventDefs, defFor } from './events/registry'
 import { newId } from './events/types'
 import type { EventDef, EventRecord } from './events/types'
 import { ago, toDate } from './lib/time'
+import EditSheet from './EditSheet'
 import './home.css'
 
 const tiles: { label: string; match: (e: EventRecord) => boolean }[] = [
@@ -19,6 +20,7 @@ export default function Home() {
   const [loaded, setLoaded] = useState(false)
   const [events, setEvents] = useState<EventRecord[]>([])
   const [picking, setPicking] = useState<EventDef | null>(null)
+  const [editing, setEditing] = useState<EventRecord | null>(null)
   const [chosen, setChosen] = useState<Record<string, boolean>>({})
   const [problem, setProblem] = useState('')
   const [now, setNow] = useState(Date.now())
@@ -27,7 +29,11 @@ export default function Home() {
     try {
       const [dogs, evs] = await Promise.all([
         pb.collection('dogs').getList(1, 1, { requestKey: null }),
-        pb.collection('events').getList<EventRecord>(1, 200, { sort: '-started_at', requestKey: null }),
+        pb.collection('events').getList<EventRecord>(1, 200, {
+          sort: '-started_at',
+          expand: 'logged_by',
+          requestKey: null,
+        }),
       ])
       const d = dogs.items[0]
       setDog(d ? { id: d.id, name: d.name } : null)
@@ -136,13 +142,20 @@ export default function Home() {
       <ul className="recent">
         {events.slice(0, 8).map((e) => (
           <li key={e.id}>
-            <span>{defFor(e.type).summary(e.data)}</span>
-            <time dateTime={e.started_at}>
-              {toDate(e.started_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-            </time>
+            <button className="row" onClick={() => setEditing(e)}>
+              <span>
+                {defFor(e.type).summary(e.data)}
+                <small>{e.expand?.logged_by?.name ?? ''}</small>
+              </span>
+              <time dateTime={e.started_at}>
+                {toDate(e.started_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+              </time>
+            </button>
           </li>
         ))}
       </ul>
+
+      {editing && <EditSheet key={editing.id} event={editing} onClose={() => setEditing(null)} onSaved={load} />}
 
       <p className="muted">Signed in as {pb.authStore.record?.email}</p>
       <button className="quiet" onClick={() => pb.authStore.clear()}>

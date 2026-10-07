@@ -1,0 +1,25 @@
+.row {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  min-height: 3rem;
+  padding: 0.25rem 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font-weight: 400;
+  border-radius: 0;
+}
+
+.row small {
+  display: block;
+  color: var(--muted);
+}
+
+.danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}

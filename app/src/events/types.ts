@@ -8,6 +8,7 @@ export interface EventRecord {
   note?: string
   data: Record<string, unknown> | null
   v: number
+  expand?: { logged_by?: { name?: string } }
 }
 
 // Everything the app needs to know about one kind of event.
