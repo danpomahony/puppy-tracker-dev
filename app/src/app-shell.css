@@ -27,3 +27,8 @@ main {
   color: var(--action);
   box-shadow: inset 0 3px 0 var(--action); /* a bar along the top of the current tab */
 }
+
+/* Start closer to the top of the screen, so the Log tab fits without scrolling. */
+main {
+  padding-top: 1rem;
+}

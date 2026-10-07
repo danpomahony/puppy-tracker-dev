@@ -16,7 +16,6 @@ const tiles: { label: string; match: (e: EventRecord) => boolean }[] = [
   { label: 'Outside', match: (e) => e.type === 'outside' },
   { label: 'Pee', match: (e) => toileting(e) && e.data?.pee === true },
   { label: 'Tiko', match: (e) => toileting(e) && e.data?.tiko === true },
-  { label: 'Accident', match: (e) => e.type === 'accident' },
 ]
 
 interface Props {
@@ -59,7 +58,12 @@ export default function Home({ dog, events, lastAccident, loaded, log: logEvent 
 
   return (
     <>
-      <h1>{dog?.name ?? 'Puppy tracker'}</h1>
+      <header className="log-header">
+        <h1>{dog?.name ?? 'Puppy tracker'}</h1>
+        <button className="quiet" title={`Signed in as ${pb.authStore.record?.email}`} onClick={() => pb.authStore.clear()}>
+          Sign out
+        </button>
+      </header>
       {loaded && !dog && <p>No dog added yet. Add one in the PocketBase dashboard.</p>}
       {loaded && dog && <SafetySign since={lastAccident && toDate(lastAccident.started_at)} now={now} />}
 
@@ -114,11 +118,6 @@ export default function Home({ dog, events, lastAccident, loaded, log: logEvent 
           )
         })}
       </dl>
-
-      <p className="muted">Signed in as {pb.authStore.record?.email}</p>
-      <button className="quiet" onClick={() => pb.authStore.clear()}>
-        Sign out
-      </button>
     </>
   )
 }

@@ -1,17 +1,38 @@
 h2 {
   font-size: 1.125rem;
-  margin: 1.5rem 0 0.5rem;
+  margin: 1rem 0 0.5rem;
 }
 
+/* Dog name on the left, a small Sign out button on the right. */
+.log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.log-header h1 {
+  margin: 0;
+}
+
+.log-header button {
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* Buttons share a row and wrap onto a new one as more event types are added. */
 .log {
   display: grid;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .log button {
-  min-height: 4.5rem;
-  font-size: 1.25rem;
+  min-height: 3.5rem;
+  font-size: 1.125rem;
 }
 
 .sheet {
