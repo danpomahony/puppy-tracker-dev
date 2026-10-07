@@ -27,7 +27,7 @@ Included from day one even with a single dog. Adding a `dog` link to existing ev
 |---|---|---|---|
 | id | text (15 chars) | yes | Generated on the phone, so entries logged offline sync without creating duplicates |
 | dog | relation to `dogs` | yes | |
-| type | text | yes | `feed`, `outside`, `accident`. Validated in the app's event registry, not the database, so a new type needs no schema change |
+| type | text | yes | `feed`, `outside`, `accident`. Defined by the app's event registry (`app/src/events/registry.ts`), not the database, so a new type needs no schema change |
 | started_at | date | yes | When it happened. Defaults to now, editable. Stored in UTC, shown in the phone's local time |
 | ended_at | date | no | Only for timed events (optional timing) |
 | logged_by | relation to `users` | yes | Set automatically from the logged-in user |
@@ -99,7 +99,7 @@ These are the acceptance tests for the model. All are calculated from timestamps
 2. **Never rename, remove or repurpose a field.** If a field turns out to be wrong, stop writing it and keep reading it.
 3. **Readers must be tolerant.** A missing field, null, and an empty string (PocketBase returns "" for empty optional fields such as ended_at) all mean "unknown". An unknown event type is shown as a generic row.
 4. **Schema changes go through migrations** committed in `backend/pb_migrations/`.
-5. **One module per event type** in `app/src/events/`, defining its label, form, validation and display. Adding a type means adding one module.
+5. **One module per event type** in `app/src/events/`, registered in `registry.ts`. Each module exports an `EventDef`: its button label, its yes/no toggles (stored as booleans in `data`; no toggles means one tap logs it) and a one-line summary for the log. Adding a type means adding one module. A type that needs a "time since" tile on the home screen also needs an entry in `tiles` in `app/src/Home.tsx`.
 
 ## Access rules (MVP)
 
