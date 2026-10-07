@@ -3,7 +3,7 @@ import { pb } from './lib/pb'
 import { eventDefs, defFor } from './events/registry'
 import { newId } from './events/types'
 import type { EventDef, EventRecord } from './events/types'
-import { ago, toDate } from './lib/time'
+import { ago, nowIso, toDate, useNow } from './lib/time'
 import EditSheet from './EditSheet'
 import './home.css'
 
@@ -23,7 +23,7 @@ export default function Home() {
   const [editing, setEditing] = useState<EventRecord | null>(null)
   const [chosen, setChosen] = useState<Record<string, boolean>>({})
   const [problem, setProblem] = useState('')
-  const [now, setNow] = useState(Date.now())
+  const now = useNow()
 
   const load = useCallback(async () => {
     try {
@@ -49,10 +49,8 @@ export default function Home() {
     load()
     // Realtime: reload whenever anyone in the family logs something.
     pb.collection('events').subscribe('*', load)
-    const tick = setInterval(() => setNow(Date.now()), 30_000)
     return () => {
       pb.collection('events').unsubscribe('*')
-      clearInterval(tick)
     }
   }, [load])
 
@@ -64,7 +62,7 @@ export default function Home() {
         id: newId(),
         dog: dog.id,
         type: def.type,
-        started_at: new Date().toISOString(),
+        started_at: nowIso(),
         logged_by: pb.authStore.record?.id,
         data,
         v: 1,
@@ -164,3 +162,4 @@ export default function Home() {
     </main>
   )
 }
+

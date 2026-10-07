@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Least privilege: the workflow can only read the repository.
+permissions:
+  contents: read
+
+# A newer push to the same branch cancels the run that is still in progress.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: App (lint and build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  backend:
+    name: Backend (API smoke test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Start PocketBase
+        run: docker compose up -d --build backend
+
+      - name: Wait until healthy
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8090/api/health >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          echo "Backend did not become healthy" >&2
+          exit 1
+
+      - name: Create a throwaway superuser
+        run: |
+          PW=$(openssl rand -hex 16)
+          echo "::add-mask::$PW"
+          echo "PB_SUPERUSER_PASSWORD=$PW" >> "$GITHUB_ENV"
+          docker compose exec -T backend /pb/pocketbase superuser upsert ci@example.test "$PW" \
+            --dir=/pb_data --migrationsDir=/pb_migrations
+
+      - name: Run the smoke test
+        run: bash ./scripts/smoke-test.sh
+        env:
+          PB_SUPERUSER_EMAIL: ci@example.test
+
+      - name: Show backend logs on failure
+        if: failure()
+        run: docker compose logs backend
