@@ -9,13 +9,16 @@ export interface Dog {
   name: string
 }
 
+// How many of the latest events are loaded. Older ones aren't shown yet.
+export const EVENT_LIMIT = 200
+
 // Fetches the dog, the latest events and the latest accident in one go. The
-// accident is fetched on its own because it can be older than the latest 200 events. requestKey: null stops the
+// accident is fetched on its own because it can be older than the events in the list. requestKey: null stops the
 // SDK cancelling one request when another of the same kind starts.
 async function fetchAll() {
   const [dogs, evs, accidents] = await Promise.all([
     pb.collection('dogs').getList(1, 1, { requestKey: null }),
-    pb.collection('events').getList<EventRecord>(1, 200, {
+    pb.collection('events').getList<EventRecord>(1, EVENT_LIMIT, {
       sort: '-started_at',
       expand: 'logged_by',
       requestKey: null,
