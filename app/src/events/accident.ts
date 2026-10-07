@@ -8,5 +8,6 @@ export const accident: EventDef = {
     { key: 'pee', label: 'Pee' },
     { key: 'tiko', label: 'Tiko' },
   ],
+  atLeastOne: true, // an accident is always pee, tiko or both
   summary: (data) => `Accident: ${outcome(data)}`,
 }

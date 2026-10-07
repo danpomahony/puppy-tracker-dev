@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { pb } from './lib/pb'
 import { defFor } from './events/registry'
 import { toDate } from './lib/time'
+import { missingChoice } from './events/types'
 import type { EventRecord } from './events/types'
 import './edit.css'
 
@@ -24,6 +25,7 @@ export default function EditSheet({ event, onClose, onSaved }: Props) {
     Object.fromEntries(def.toggles.map((t) => [t.key, event.data?.[t.key] === true])),
   )
   const [error, setError] = useState('')
+  const hint = missingChoice(def, flags)
 
   useEffect(() => {
     ref.current?.scrollIntoView({ block: 'center' })
@@ -71,8 +73,11 @@ export default function EditSheet({ event, onClose, onSaved }: Props) {
           {t.label}
         </label>
       ))}
+      {hint && <p className="muted">{hint}</p>}
       {error && <p className="error">{error}</p>}
-      <button type="submit">Save changes</button>
+      <button type="submit" disabled={!!hint}>
+        Save changes
+      </button>
       <button type="button" className="quiet" onClick={onClose}>
         Cancel
       </button>

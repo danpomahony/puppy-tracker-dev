@@ -17,6 +17,18 @@ export function ago(ms: number): string {
   return `${d} day${d === 1 ? '' : 's'} ago`
 }
 
+// When an entry happened, for lists: "3:05 pm" today, "Yesterday 3:05 pm",
+// "Mon 3:05 pm" within the last week, then "7 Oct 3:05 pm".
+export function dayTime(d: Date, now: number): string {
+  const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  const startOfDay = (t: number) => new Date(t).setHours(0, 0, 0, 0)
+  const days = Math.round((startOfDay(now) - startOfDay(d.getTime())) / 86_400_000)
+  if (days <= 0) return time
+  if (days === 1) return `Yesterday ${time}`
+  if (days < 7) return `${d.toLocaleDateString([], { weekday: 'short' })} ${time}`
+  return `${d.toLocaleDateString([], { day: 'numeric', month: 'short' })} ${time}`
+}
+
 // Re-renders the component every `ms` milliseconds with the current time.
 // The clock is an external system, so useSyncExternalStore is the idiomatic way
 // to read it. The snapshot is rounded to the interval so it stays stable between ticks.
