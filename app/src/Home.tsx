@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { pb } from './lib/pb'
 import { eventDefs, defFor } from './events/registry'
 import { missingChoice } from './events/types'
@@ -6,6 +6,7 @@ import type { EventDef, EventRecord } from './events/types'
 import { ago, dayTime, toDate, useNow } from './lib/time'
 import { useEvents } from './lib/useEvents'
 import EditSheet from './EditSheet'
+import SafetySign from './SafetySign'
 import './home.css'
 
 // Pee and tiko count wherever they happened: outside or as an accident.
@@ -20,12 +21,21 @@ const tiles: { label: string; match: (e: EventRecord) => boolean }[] = [
 ]
 
 export default function Home() {
-  const { dog, events, loaded, problem, log: logEvent, reload } = useEvents()
+  const { dog, events, lastAccident, loaded, problem, log: logEvent, reload } = useEvents()
   const [picking, setPicking] = useState<EventDef | null>(null)
   const [editing, setEditing] = useState<EventRecord | null>(null)
   const [chosen, setChosen] = useState<Record<string, boolean>>({})
   const now = useNow()
   const hint = picking ? missingChoice(picking, chosen) : ''
+  const pickerRef = useRef<HTMLFormElement>(null)
+
+  // When the picker opens, bring it fully into view (like the edit sheet does) so
+  // its choices and Save button aren't hidden below the bottom of the screen.
+  // When it closes, by Save or Cancel, go back to the top to see the sign and tiles.
+  useEffect(() => {
+    if (picking) pickerRef.current?.scrollIntoView({ block: 'center' })
+    else window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [picking])
 
   function log(def: EventDef, data: Record<string, boolean>) {
     setPicking(null)
@@ -46,6 +56,7 @@ export default function Home() {
       <h1>{dog?.name ?? 'Puppy tracker'}</h1>
       {problem && <p className="error">{problem}</p>}
       {loaded && !dog && <p>No dog added yet. Add one in the PocketBase dashboard.</p>}
+      {loaded && dog && <SafetySign since={lastAccident && toDate(lastAccident.started_at)} now={now} />}
 
       <section className="log">
         {eventDefs.map((def) => (
@@ -58,6 +69,7 @@ export default function Home() {
       {picking && (
         <form
           className="sheet"
+          ref={pickerRef}
           onSubmit={(e) => {
             e.preventDefault()
             // Always send every toggle, so "nothing happened" is saved as false, not missing.

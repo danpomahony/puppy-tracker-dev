@@ -13,6 +13,16 @@
   --action-text: #ffffff;
   --accent: #b98a52;
   --danger: #b3261e;
+
+  /* Safety sign: hazard stripes, a safety-green header and a dark counter. */
+  --sign-face: #fbfaf5;
+  --sign-ink: #1c1c1c;
+  --sign-header: #1f6b3d;
+  --sign-header-text: #ffffff;
+  --hazard: #f2c230;
+  --hazard-dark: #1c1c1c;
+  --sign-digits-bg: #1c1c1c;
+  --sign-digits: #f2c230;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -25,6 +35,12 @@
     --action: #7fa3c7;
     --action-text: #10202e;
     --danger: #f2b8b5;
+
+    --sign-face: #26313c;
+    --sign-ink: #e6ebf0;
+    --sign-header: #2d8a52;
+    --hazard: #d9ad2b;
+    --sign-digits-bg: #10161c;
   }
 }
 

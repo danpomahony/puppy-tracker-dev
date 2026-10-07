@@ -9,19 +9,29 @@ export interface Dog {
   name: string
 }
 
-// Fetches the dog and the latest events in one go. requestKey: null stops the
+// Fetches the dog, the latest events and the latest accident in one go. The
+// accident is fetched on its own because it can be older than the latest 200 events. requestKey: null stops the
 // SDK cancelling one request when another of the same kind starts.
 async function fetchAll() {
-  const [dogs, evs] = await Promise.all([
+  const [dogs, evs, accidents] = await Promise.all([
     pb.collection('dogs').getList(1, 1, { requestKey: null }),
     pb.collection('events').getList<EventRecord>(1, 200, {
       sort: '-started_at',
       expand: 'logged_by',
       requestKey: null,
     }),
+    pb.collection('events').getList<EventRecord>(1, 1, {
+      filter: 'type = "accident"',
+      sort: '-started_at',
+      requestKey: null,
+    }),
   ])
   const d = dogs.items[0]
-  return { dog: d ? ({ id: d.id, name: d.name } as Dog) : null, events: evs.items }
+  return {
+    dog: d ? ({ id: d.id, name: d.name } as Dog) : null,
+    events: evs.items,
+    lastAccident: accidents.items[0] ?? null,
+  }
 }
 
 // A custom hook: a function whose name starts with "use" that can use React's
@@ -30,6 +40,7 @@ async function fetchAll() {
 export function useEvents() {
   const [dog, setDog] = useState<Dog | null>(null)
   const [events, setEvents] = useState<EventRecord[]>([])
+  const [lastAccident, setLastAccident] = useState<EventRecord | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [problem, setProblem] = useState('')
 
@@ -41,6 +52,7 @@ export function useEvents() {
         (r) => {
           setDog(r.dog)
           setEvents(r.events)
+          setLastAccident(r.lastAccident)
           setProblem('')
           setLoaded(true)
         },
@@ -85,5 +97,5 @@ export function useEvents() {
     [dog, reload],
   )
 
-  return { dog, events, loaded, problem, log, reload }
+  return { dog, events, lastAccident, loaded, problem, log, reload }
 }

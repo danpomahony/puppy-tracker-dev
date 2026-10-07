@@ -1,0 +1,51 @@
+.safety-sign {
+  margin-bottom: 1.5rem;
+  padding: 0.625rem; /* the hazard-stripe border shows through this padding */
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--hazard) 0 0.75rem,
+    var(--hazard-dark) 0.75rem 1.5rem
+  );
+  border-radius: 0.5rem;
+  color: var(--sign-ink);
+  text-align: center;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.safety-sign > * {
+  margin: 0;
+  padding: 0.25rem 0.75rem;
+  background: var(--sign-face);
+}
+
+.safety-sign > :last-child {
+  padding-bottom: 0.75rem;
+}
+
+.safety-sign-header {
+  background: var(--sign-header);
+  color: var(--sign-header-text);
+  font-size: 1.25rem;
+  padding: 0.5rem;
+}
+
+.safety-sign-counter {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.safety-sign-digits {
+  display: block;
+  margin-bottom: 0.25rem;
+  padding: 0.25rem 0;
+  background: var(--sign-digits-bg);
+  color: var(--sign-digits);
+  border-radius: 0.25rem;
+  font-size: 2rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
