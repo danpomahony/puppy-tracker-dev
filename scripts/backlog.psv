@@ -1,0 +1,31 @@
+# milestone|labels|title|body
+MVP polish|tech-debt|Move data loading into a useEvents hook|Pull the fetch, realtime subscription and create logic out of Home.tsx into a hook. Clears the remaining oxlint set-state-in-effect warning and prepares for the offline queue.
+MVP polish|bug|Show a day label on entries older than today|The Recent list shows only the time, so yesterday's entries look like today's.
+MVP polish|feature|Add a History screen grouped by day|Recent shows the last 8 entries. Add a scrollable history, grouped by day.
+MVP polish|tech-debt|Replace window.confirm with an in-app delete confirmation|The browser confirm dialog is blunt on phones. Use a proper inline confirmation.
+MVP polish|feature|Optional start and stop timer for outside trips|One tap stays the default. A timer fills in ended_at when wanted.
+MVP polish|feature|Add a note field to the log and edit forms|The note field exists on every event but the app never shows it.
+MVP polish|feature|Prompt new users for a display name|Names appear in the Recent list but currently have to be set by hand in the PocketBase dashboard.
+MVP polish|tech-debt|Smoke test: confirm other users' email addresses stay hidden|After opening the users View rule for display names, check that only the name is visible to other family members.
+MVP polish|tech-debt|Tighten linting: shellcheck for scripts and fail CI on warnings|Run shellcheck on scripts/smoke-test.sh and fix the findings. Once oxlint is clean, make CI fail on warnings.
+MVP polish|docs|Replace the Vite README with a real project README|Describe the project, the architecture and how to run it. Add the CI status badge.
+MVP polish|docs|Write ADR 0001: single event log with flexible data|Record why events are one collection with a JSON data field, the add-only rules, and why dogs is its own collection.
+HTTPS and offline|infra|Decide how phones reach the app over HTTPS|Compare Tailscale, a VPS with Caddy, and a home server behind a tunnel. Record the decision as an ADR.
+HTTPS and offline|feature|Make the app an installable PWA|Add a web manifest, icons and a service worker. Needs HTTPS.
+HTTPS and offline|feature|Offline queue: log with no signal and sync later|Keep client-generated ids so retries are safe. Treat a duplicate-id rejection as already synced.
+Training and words|feature|Words collection and library screen|Words with an optional hand signal, a how-to-say-it note, and a status of introducing, learning or knows it.
+Training and words|feature|Practice event type|Log which word was practised and how it went, as a new event type with no schema change.
+Training and words|feature|Suggest a word's status from recent practice results|Show which words are actually sticking.
+Insights|feature|Insight: typical gap between outside trips|Calculated from timestamps.
+Insights|feature|Insight: delay from feeding to the next outside trip and to accidents|Calculated from timestamps.
+Insights|feature|Insight: best outside window after a meal|Share of outside trips with a result, grouped by minutes since the last feed.
+Production infra|infra|Provision the production host with infrastructure as code|OpenTofu or Ansible, kept in infra/.
+Production infra|infra|Reverse proxy with automatic TLS|Caddy or Traefik in front of the app and PocketBase.
+Production infra|infra|Automated database backups with a tested restore|restic or Litestream, plus a documented restore drill.
+Production infra|infra|Monitoring and alerting|Uptime Kuma first, then Prometheus and Grafana if wanted.
+Production infra|infra|Encrypted secrets with sops and age|Keep deploy secrets in the repo, encrypted.
+Production infra|infra|Deploy from CI on a version tag|Build the image, push it and roll it out when a tag is pushed.
+Production infra|infra|Self-host Forgejo and mirror to GitHub|Run Forgejo on the home server, keeping GitHub as the public mirror.
+Later|feature|Sleep, walk and play event types|One new module each in app/src/events/, with timers where useful.
+Later|feature|Weight and vet records|Weight over time, vaccinations and vet visits.
+Later|feature|Go backend embedding PocketBase|Server-side validation of event data, an insights endpoint, a metrics endpoint and a multi-stage Docker build.
