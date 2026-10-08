@@ -13,6 +13,12 @@
   padding: 0.5rem 0;
 }
 
+/* The computed daily sleep total: not tappable, so it is set apart from logged entries. */
+.entries .total .row {
+  color: var(--muted);
+  font-style: italic;
+}
+
 .entries .sheet {
   margin: 0.5rem 0 1rem;
 }

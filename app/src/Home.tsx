@@ -3,7 +3,8 @@ import { eventDefs } from './events/registry'
 import { isOpen, missingChoice } from './events/types'
 import type { EventDef, EventRecord } from './events/types'
 import { pb } from './lib/pb'
-import { ago, toDate, useNow } from './lib/time'
+import { dayStart, sleepByDay, sleepStatus } from './lib/sleep'
+import { ago, duration, toDate, useNow } from './lib/time'
 import type { Dog } from './lib/useEvents'
 import SafetySign from './SafetySign'
 import './home.css'
@@ -27,6 +28,8 @@ interface Props {
   finish: (id: string) => Promise<void>
 }
 
+const sleepTotal = (ms: number | undefined) => (ms ? duration(ms) : 'Not yet')
+
 // The Log tab: the safety sign, the log buttons and the "time since" tiles.
 export default function Home({ dog, events, lastAccident, loaded, log: logEvent, finish }: Props) {
   const [picking, setPicking] = useState<EventDef | null>(null)
@@ -34,6 +37,11 @@ export default function Home({ dog, events, lastAccident, loaded, log: logEvent,
   const now = useNow()
   const hint = picking ? missingChoice(picking, chosen) : ''
   const pickerRef = useRef<HTMLFormElement>(null)
+
+  const today = dayStart(now)
+  const slept = sleepByDay(events, now)
+  const yesterday = dayStart(today - 1)
+  const sleeping = sleepStatus(events)
 
   // When the picker opens, bring it fully into view (like the edit sheet does) so
   // its choices and Save button aren't hidden below the bottom of the screen.
@@ -115,6 +123,21 @@ export default function Home({ dog, events, lastAccident, loaded, log: logEvent,
           </button>
         </form>
       )}
+
+      <dl className="tiles sleep-tiles">
+        <div>
+          <dt>{sleeping.asleep ? 'Asleep for' : 'Awake for'}</dt>
+          <dd>{sleeping.since === null ? 'No sleep yet' : duration(now - sleeping.since)}</dd>
+        </div>
+        <div>
+          <dt>Slept today</dt>
+          <dd>{sleepTotal(slept.get(today))}</dd>
+        </div>
+        <div>
+          <dt>Yesterday</dt>
+          <dd>{sleepTotal(slept.get(yesterday))}</dd>
+        </div>
+      </dl>
 
       <h2>Time since</h2>
       <dl className="tiles">
