@@ -27,11 +27,11 @@ Included from day one even with a single dog. Adding a `dog` link to existing ev
 |---|---|---|---|
 | id | text (15 chars) | yes | Generated on the phone, so entries logged offline sync without creating duplicates |
 | dog | relation to `dogs` | yes | |
-| type | text | yes | `feed`, `outside`, `accident`, `sleep`. Defined by the app's event registry (`app/src/events/registry.ts`), not the database, so a new type needs no schema change |
+| type | text | yes | `feed`, `outside`, `accident`, `sleep`, `note`. Defined by the app's event registry (`app/src/events/registry.ts`), not the database, so a new type needs no schema change |
 | started_at | date | yes | When it happened. Defaults to now, editable. Stored in UTC, shown in the phone's local time |
 | ended_at | date | no | Only for timed events (optional timing) |
 | logged_by | relation to `users` | yes | Set automatically from the logged-in user |
-| note | text | no | Free text, available on every type |
+| note | text | no | Free text, available on every type. The app lets you write one when logging Outside, Accident and Note, and add or change one on any entry from the edit sheet |
 | data | json | yes | Type-specific details (default `{}`). See below |
 | v | number | yes | Format version of `data`, default 1. Only bumped if a breaking change is ever unavoidable |
 | created, updated | autodate | auto | When it was *logged*, as opposed to when it *happened* |
@@ -73,6 +73,14 @@ Both false means she went out and did nothing. That is still a valuable record: 
 | (none) | | | `data` is `{}` |
 
 `started_at` is when she fell asleep. `ended_at` is when she woke up, and is empty while she is still asleep. The Sleep button logs the start. While a sleep is open, the same button reads "Woke up" and fills in `ended_at`. Both times can be corrected afterwards in the edit sheet.
+
+### `note`
+
+| `data` field | Type | Required | Notes |
+|---|---|---|---|
+| (none) | | | `data` is `{}` |
+
+For anything worth remembering that does not deserve its own event type. The text is the event's `note` field and cannot be empty. `started_at` is when it happened.
 
 #### Sleep totals
 

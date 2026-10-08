@@ -73,7 +73,7 @@ export default function History({ events, loaded, reload }: Props) {
                   <button className="row" onClick={() => setEditing(editing?.id === e.id ? null : e)}>
                     <span>
                       {defFor(e.type).summary(e.data, e)}
-                      <small>{e.expand?.logged_by?.name ?? ''}</small>
+                      <small>{[e.expand?.logged_by?.name, !defFor(e.type).noteRequired && e.note?.trim()].filter(Boolean).join(' · ')}</small>
                     </span>
                     <time dateTime={e.started_at}>{timeOfDay(toDate(e.started_at))}</time>
                   </button>

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { accident } from './accident'
 import { outside } from './outside'
 import { defFor, eventDefs } from './registry'
-import { isOpen, missingChoice, newId, outcome } from './types'
+import { note } from './note'
+import { isOpen, missingChoice, missingNote, newId, outcome } from './types'
 import type { EventRecord } from './types'
 
 describe('outcome', () => {
@@ -62,5 +63,28 @@ describe('registry', () => {
 
   it('falls back to a generic definition for an unknown type', () => {
     expect(defFor('from-a-newer-app').summary(null)).toBe('from-a-newer-app')
+  })
+})
+
+describe('note events', () => {
+  const entry = { id: 'x', dog: 'd', type: 'note', started_at: '2026-10-08 01:00:00.000Z', logged_by: 'u', data: {}, v: 1 }
+
+  it('shows the note text as the entry', () => {
+    expect(note.summary({}, { ...entry, note: '  dragged her bum on the ground ' })).toBe('dragged her bum on the ground')
+  })
+
+  it('falls back to a plain label when the text is missing or empty', () => {
+    expect(note.summary({}, { ...entry, note: '' })).toBe('Note')
+    expect(note.summary({})).toBe('Note')
+  })
+
+  it('cannot be saved empty or with only spaces', () => {
+    expect(missingNote(note, '')).toBe('Write a note before saving.')
+    expect(missingNote(note, '   ')).toBe('Write a note before saving.')
+    expect(missingNote(note, 'ok')).toBe('')
+  })
+
+  it('does not require a note on other events', () => {
+    expect(missingNote(outside, '')).toBe('')
   })
 })

@@ -74,7 +74,8 @@ label {
   font-weight: 600;
 }
 
-input {
+input,
+textarea {
   font: inherit;
   padding: 0.75rem;
   border: 1px solid var(--line);
