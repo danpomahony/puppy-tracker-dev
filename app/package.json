@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "oxlint",
+    "lint": "oxlint --deny-warnings",
     "test": "TZ=Pacific/Auckland vitest run && TZ=America/New_York vitest run",
     "preview": "vite preview"
   },
