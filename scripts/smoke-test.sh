@@ -64,6 +64,11 @@ check() {
 
 is_2xx() { [[ $STATUS =~ ^2 ]]; }
 is_rejected() { [[ $STATUS =~ ^[45] ]]; }
+# What other family members may see of a profile. If a field is added to the users
+# collection, this check fails until someone decides whether everyone should see it.
+profile_shows_only_known_fields() {
+  body_has '(keys - ["avatar","collectionId","collectionName","created","emailVisibility","id","name","updated","verified"]) == []'
+}
 # No email address other than the signed-in user's own (ID_A) shows in a list of users.
 emails_hidden_from_others() {
   is_rejected || jq -e --arg me "$ID_A" '[.items[] | select(.id != $me) | (.email // "")] | all(. == "")' <<<"$BODY" >/dev/null
@@ -174,6 +179,7 @@ api GET "/api/collections/users/records/$ID_B" "$TOKEN_A"
 check "A can view B's profile (so display names can show)" is_2xx
 check "the profile has a name field" body_has 'has("name")'
 check "B's email address is hidden from A" body_has '(.email // "") == ""'
+check "B's profile shows no fields beyond the known, harmless ones" profile_shows_only_known_fields
 api GET "/api/collections/users/records/$ID_A" "$TOKEN_A"
 check "A can still see their own email address" body_has '(.email // "") != ""'
 api GET "/api/collections/users/records?perPage=200" "$TOKEN_A"
