@@ -36,6 +36,21 @@ Included from day one even with a single dog. Adding a `dog` link to existing ev
 | v | number | yes | Format version of `data`, default 1. Only bumped if a breaking change is ever unavoidable |
 | created, updated | autodate | auto | When it was *logged*, as opposed to when it *happened* |
 
+### `words`
+
+The family's shared vocabulary: one row per thing the puppy should understand, shown by the term we use for it. Words belong to the family, not to a dog, so there is no `dog` link.
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| term | text | yes | The word we use, e.g. "tiko" or "pee" |
+| description | text | no | What it means and when we use it |
+| how_to_say | text | no | Tone, hand signal and so on |
+| why | text | no | Why we chose this word |
+| category | text | no | Free text, e.g. toileting, commands, manners, people |
+| agreed | select | no | `proposed` or `confirmed`. A proposed word is a command we think is worth teaching. Missing means `proposed` |
+| status | select | no | `introducing`, `learning` or `knows it`. Missing means `introducing` |
+| created, updated | autodate | auto | |
+
 ## Event types (MVP)
 
 ### `feed`
@@ -131,10 +146,10 @@ These are the acceptance tests for the model. All are calculated from timestamps
 
 ## Access rules (MVP)
 
-Any logged-in family member can read, create and edit `events` and `dogs`. Logged-out visitors can do nothing.
+Any logged-in family member can read, create and edit `events`, `dogs` and `words`. Logged-out visitors can do nothing.
 
 ## Planned, not in the MVP
 
-- `words` collection (the vocabulary library) and a `practice` event type referencing a word
+- A `practice` event type referencing a word
 - Weight and vet records
 - Possible later additions: `pee_count`, outside location, soft delete, households for sharing between families
