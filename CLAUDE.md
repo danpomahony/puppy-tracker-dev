@@ -23,7 +23,7 @@ A shared care and training log for a new puppy. Family members each use the app 
 ## Commands
 
 - Backend: `docker compose up -d --build`. Admin UI at http://localhost:8090/_/
-- App, from `app/`: `npm run dev -- --host` (port 5173, strict), `npm run lint`, `npm run build`
+- App, from `app/`: `npm run dev` (port 5173, strict), `npm run lint`, `npm run build`
 - Smoke test: `PB_SUPERUSER_EMAIL=<superuser email> ./scripts/smoke-test.sh` (prompts for the password)
 - Before finishing a change, run lint, build, and the smoke test if the backend or data model changed.
 - There is no unit test runner. `npm run build` runs `tsc -b`, so it is also the type check. The smoke test (bash, curl, jq) is the only automated test. It creates throwaway users and a dog, checks the API rules end to end, then cleans up. CI (`ci.yml`) runs lint and build, then starts the backend, creates a throwaway superuser and runs the smoke test.
@@ -48,7 +48,7 @@ A shared care and training log for a new puppy. Family members each use the app 
 
 - TypeScript strict. Keep components small. Plain CSS using the design tokens at the top of `src/index.css`.
 - UI copy: sentence case and active voice. Errors say what went wrong and what to do next.
-- Mobile first: large tap targets. It must work on a phone over plain HTTP on the home network.
+- Mobile first: large tap targets. It must work on a phone over HTTPS through Tailscale.
 - Conventional commits: `feat(app): ...`, `fix(app): ...`, `ci: ...`, `docs: ...`.
 
 ## Workflow
@@ -59,5 +59,5 @@ A shared care and training log for a new puppy. Family members each use the app 
 
 ## Current decisions and constraints
 
-- Phone access is plain HTTP over home Wi-Fi, served from the laptop (WSL mirrored networking). HTTPS, which is needed for PWA install and offline mode, is a planned decision to be recorded as an ADR.
+- Phone access is HTTPS through Tailscale Serve, run on the Windows host and forwarding to the dev server on `localhost:5173` (WSL mirrored networking). The app is not exposed to the home network, so the Vite server runs without `--host`. Vite only accepts `.ts.net` hostnames besides localhost. The decision is recorded in `docs/adr/0002-self-host-at-home-with-https-access.md`.
 - Offline queue, the words library, insights and production infrastructure are on the backlog as GitHub milestones.

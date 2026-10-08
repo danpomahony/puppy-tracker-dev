@@ -4,7 +4,7 @@ The phone app: Vite, React and TypeScript. See the [project README](../README.md
 
 ```sh
 npm install
-npm run dev -- --host   # http://localhost:5173
+npm run dev             # http://localhost:5173
 npm run lint
 npm run build           # also the type check (tsc -b)
 ```
