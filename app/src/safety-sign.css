@@ -1,6 +1,6 @@
 .safety-sign {
-  margin-bottom: 0.75rem;
-  padding: 0.5rem; /* the hazard-stripe border shows through this padding */
+  margin-bottom: 0.5rem;
+  padding: 0.375rem; /* the hazard-stripe border shows through this padding */
   background: repeating-linear-gradient(
     -45deg,
     var(--hazard) 0 0.75rem,
@@ -45,7 +45,7 @@
   background: var(--sign-digits-bg);
   color: var(--sign-digits);
   border-radius: 0.25rem;
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
 }

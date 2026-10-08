@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ago, dayLabel, duration, toDate } from './time'
+import { ago, agoShort, dayLabel, duration, toDate } from './time'
 
 const MIN = 60_000
 const HOUR = 60 * MIN
@@ -42,6 +42,18 @@ describe('ago', () => {
     [49 * HOUR, '2 days ago'],
   ])('formats %i ms as "%s"', (ms, text) => {
     expect(ago(ms)).toBe(text)
+  })
+})
+
+describe('agoShort', () => {
+  it.each([
+    [10_000, 'just now'],
+    [20 * MIN, '20m ago'],
+    [2 * HOUR + 22 * MIN, '2h 22m ago'],
+    [26 * HOUR, '1d 2h ago'],
+    [-5 * MIN, 'just now'],
+  ])('formats %i ms as "%s"', (ms, text) => {
+    expect(agoShort(ms)).toBe(text)
   })
 })
 
