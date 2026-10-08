@@ -107,6 +107,6 @@ describe('things that last a while', () => {
   })
 
   it('gives each one a button label for ending it', () => {
-    expect([sleep, walk, play].map((d) => d.span?.endLabel)).toEqual(['Woke up', 'Back home', 'Done'])
+    expect([sleep, walk, play].map((d) => d.span?.endLabel)).toEqual(['Woke up', 'Back home', 'Stop play'])
   })
 })

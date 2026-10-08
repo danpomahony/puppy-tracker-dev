@@ -80,7 +80,7 @@ Both false means she went out and did nothing. That is still a valuable record: 
 |---|---|---|---|
 | (none) | | | `data` is `{}` |
 
-Both work exactly like `sleep`. `started_at` is when the walk or play began, and `ended_at` is when it finished, empty while it is still going. The Walk button turns into **Back home** and the Play button into **Done** while one is open. Both times can be corrected in the edit sheet, and History shows how long it lasted. There are no totals or tiles for them yet.
+Both work exactly like `sleep`. `started_at` is when the walk or play began, and `ended_at` is when it finished, empty while it is still going. The Walk button turns into **Back home** and the Play button into **Stop play** while one is open. Both times can be corrected in the edit sheet, and History shows how long it lasted. There are no totals or tiles for them yet.
 
 ### `note`
 
