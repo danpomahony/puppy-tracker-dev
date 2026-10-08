@@ -107,6 +107,10 @@ cleanup() {
       done
       api DELETE "/api/collections/dogs/records/$DOG_ID" "$TOKEN_SU"
     fi
+    api GET "/api/collections/words/records?perPage=200&fields=id&filter=term~%27smoke-test-%27" "$TOKEN_SU"
+    for id in $(jq -r '.items[].id' <<<"$BODY" 2>/dev/null); do
+      api DELETE "/api/collections/words/records/$id" "$TOKEN_SU"
+    done
     [[ -n $ID_A ]] && api DELETE "/api/collections/users/records/$ID_A" "$TOKEN_SU"
     [[ -n $ID_B ]] && api DELETE "/api/collections/users/records/$ID_B" "$TOKEN_SU"
   fi
@@ -212,6 +216,31 @@ api POST /api/collections/events/records "$TOKEN_A" \
   "$(event_json "$(rand_id)" outside "$ID_A" '{"pee":false,"tiko":false}' "$(now)")"
 check "optional timing: ended_at is stored when given" \
   body_has '(.ended_at // "") != ""'
+
+echo "Words"
+api POST /api/collections/words/records "$TOKEN_A" \
+  '{"term":"smoke-test-sit","description":"Sit down","status":"learning","agreed":"proposed"}'
+check "A adds a word" is_2xx
+WORD_ID=$(jq -r .id <<<"$BODY")
+api GET "/api/collections/words/records/$WORD_ID" "$TOKEN_B"
+check "B can see A's word" body_has '.term == "smoke-test-sit" and .status == "learning"'
+
+api PATCH "/api/collections/words/records/$WORD_ID" "$TOKEN_B" '{"agreed":"confirmed"}'
+check "B can confirm A's word" body_has '.agreed == "confirmed"'
+
+api POST /api/collections/words/records "$TOKEN_A" '{"term":"","description":"no term"}'
+check "a word with no term is rejected" is_rejected
+
+api POST /api/collections/words/records "$TOKEN_A" '{"term":"smoke-test-bad","status":"nonsense"}'
+check "an unknown status is rejected" is_rejected
+
+api POST /api/collections/words/records "" '{"term":"smoke-test-anon"}'
+check "a logged-out visitor cannot add a word" is_rejected
+api GET "/api/collections/words/records" ""
+check "a logged-out visitor cannot read words" shows_nothing
+
+api DELETE "/api/collections/words/records/$WORD_ID" "$TOKEN_B"
+check "B can delete a word" is_2xx
 
 # ---------- summary ----------
 

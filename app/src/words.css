@@ -1,0 +1,29 @@
+.badges {
+  display: grid;
+  justify-items: end;
+  gap: 0.125rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* The one coloured thing on the list: a word that still needs confirming. Dark text on a
+   light tint keeps it readable in both themes. */
+.badges em {
+  padding: 0.125rem 0.5rem;
+  color: var(--text);
+  font-style: normal;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+}
+
+.badges strong {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* Space between the Add button and the first category. */
+button.add {
+  margin-top: 0.5rem;
+}
