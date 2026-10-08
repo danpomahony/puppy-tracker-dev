@@ -15,8 +15,42 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Works out which parts of the repo changed, so docs-only changes skip the heavy jobs.
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # On pull requests the action lists changed files through the API.
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+      scripts: ${{ steps.filter.outputs.scripts }}
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3.0.2
+        id: filter
+        with:
+          # The workflow file is in every list, so a workflow change always runs everything.
+          filters: |
+            app:
+              - 'app/**'
+              - '.github/workflows/**'
+            scripts:
+              - 'scripts/**'
+              - '.github/workflows/**'
+            backend:
+              - 'backend/**'
+              - 'scripts/**'
+              - 'compose.yaml'
+              - '.github/workflows/**'
+
   app:
     name: App (lint, test and build)
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
@@ -36,6 +70,8 @@ jobs:
 
   scripts:
     name: Scripts (shellcheck)
+    needs: changes
+    if: needs.changes.outputs.scripts == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -45,6 +81,8 @@ jobs:
 
   backend:
     name: Backend (API smoke test)
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -78,3 +116,19 @@ jobs:
       - name: Show backend logs on failure
         if: failure()
         run: docker compose logs backend
+
+  # Require this job if branch protection is added. It always runs, and passes when the
+  # jobs above passed or were skipped. A skipped job on its own would block merging.
+  ci-ok:
+    name: CI passed
+    needs: [changes, app, scripts, backend]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail if any job failed or was cancelled
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            echo "A CI job failed or was cancelled" >&2
+            exit 1
+          fi
