@@ -89,7 +89,7 @@ export default function Home({ dog, events, lastAccident, loaded, log: logEvent,
         {eventDefs.map((def) => {
           const open = def.span && events.some((e) => e.type === def.type && isOpen(e))
           return (
-            <button key={def.type} className={def.span ? 'wide' : undefined} disabled={!dog} onClick={() => tap(def)}>
+            <button key={def.type} className={def.noteRequired ? 'full' : undefined} disabled={!dog} onClick={() => tap(def)}>
               {open ? def.span?.endLabel : def.label}
             </button>
           )
