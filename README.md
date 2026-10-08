@@ -6,6 +6,11 @@ A shared care and training log for a new puppy. Each family member uses the app 
 
 It is also a portfolio project, so the infrastructure (CI, tests, and later IaC, TLS, backups and monitoring) is treated as seriously as the features.
 
+<p>
+  <img src="docs/images/log-tab.jpeg" alt="The Log tab: a safety sign counting time since the last accident, three log buttons and time-since tiles" width="260">
+  <img src="docs/images/history-tab.jpeg" alt="The History tab: entries grouped by day, newest first" width="260">
+</p>
+
 ## How it fits together
 
 ```
@@ -58,3 +63,7 @@ The MVP is working: login, logging feeds, outside trips and accidents, a worksit
 - HTTPS, so the app can be installed as a PWA and work offline
 - Production infrastructure as code, with a reverse proxy and TLS, tested backups, monitoring and deploys from CI
 - A words library, training practice and insights from the logged data
+
+## License
+
+[MIT](LICENSE)
