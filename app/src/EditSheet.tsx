@@ -31,9 +31,11 @@ export default function EditSheet({ event, onClose, onSaved }: Props) {
   const [confirming, setConfirming] = useState(false)
   const hint = missingChoice(def, flags) || missingNote(def, note)
 
+  // Bring the sheet into view when it opens, and again when the delete confirmation
+  // opens or closes, because the sheet changes height and would otherwise stay shifted.
   useEffect(() => {
     ref.current?.scrollIntoView({ block: 'center' })
-  }, [])
+  }, [confirming])
 
   async function save(e: FormEvent) {
     e.preventDefault()
