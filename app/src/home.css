@@ -32,12 +32,13 @@ h2 {
 
 .log button {
   min-height: 3.5rem;
-  font-size: 1.125rem;
+  padding: 0.5rem;
+  font-size: 1rem;
 }
 
-/* A button that starts and ends something (sleep) is twice as wide, so Note fits beside it. */
-.log button.wide {
-  grid-column: span 2;
+/* A button that gets a whole row to itself (Note). */
+.log button.full {
+  grid-column: 1 / -1;
 }
 
 .sheet {
