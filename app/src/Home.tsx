@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { eventDefs } from './events/registry'
-import { isOpen, missingChoice } from './events/types'
+import { isOpen, missingChoice, missingNote } from './events/types'
 import type { EventDef, EventRecord } from './events/types'
 import { pb } from './lib/pb'
 import { dayStart, sleepByDay, sleepStatus } from './lib/sleep'
@@ -24,7 +24,7 @@ interface Props {
   events: EventRecord[]
   lastAccident: EventRecord | null
   loaded: boolean
-  log: (type: string, data: Record<string, unknown>) => Promise<void>
+  log: (type: string, data: Record<string, unknown>, note?: string) => Promise<void>
   finish: (id: string) => Promise<void>
 }
 
@@ -34,8 +34,9 @@ const sleepTotal = (ms: number | undefined) => (ms ? duration(ms) : 'Not yet')
 export default function Home({ dog, events, lastAccident, loaded, log: logEvent, finish }: Props) {
   const [picking, setPicking] = useState<EventDef | null>(null)
   const [chosen, setChosen] = useState<Record<string, boolean>>({})
+  const [note, setNote] = useState('')
   const now = useNow()
-  const hint = picking ? missingChoice(picking, chosen) : ''
+  const hint = picking ? missingChoice(picking, chosen) || missingNote(picking, note) : ''
   const pickerRef = useRef<HTMLFormElement>(null)
 
   const today = dayStart(now)
@@ -51,9 +52,9 @@ export default function Home({ dog, events, lastAccident, loaded, log: logEvent,
     else window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [picking])
 
-  function log(def: EventDef, data: Record<string, boolean>) {
+  function log(def: EventDef, data: Record<string, boolean>, text = '') {
     setPicking(null)
-    void logEvent(def.type, data)
+    void logEvent(def.type, data, text)
   }
 
   function tap(def: EventDef) {
@@ -63,11 +64,13 @@ export default function Home({ dog, events, lastAccident, loaded, log: logEvent,
       void finish(open.id)
       return
     }
-    if (def.toggles.length === 0) {
+    // One tap logs it, unless it needs a choice or a note first.
+    if (def.toggles.length === 0 && !def.noteRequired) {
       log(def, {})
       return
     }
     setChosen({})
+    setNote('')
     setPicking(def)
   }
 
@@ -100,7 +103,7 @@ export default function Home({ dog, events, lastAccident, loaded, log: logEvent,
           onSubmit={(e) => {
             e.preventDefault()
             // Always send every toggle, so "nothing happened" is saved as false, not missing.
-            log(picking, Object.fromEntries(picking.toggles.map((t) => [t.key, !!chosen[t.key]])))
+            log(picking, Object.fromEntries(picking.toggles.map((t) => [t.key, !!chosen[t.key]])), note)
           }}
         >
           <h2>{picking.label}</h2>
@@ -114,6 +117,10 @@ export default function Home({ dog, events, lastAccident, loaded, log: logEvent,
               {t.label}
             </label>
           ))}
+          <label>
+            {picking.noteRequired ? 'Note' : 'Note (optional)'}
+            <textarea rows={3} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} autoFocus={!!picking.noteRequired} />
+          </label>
           {hint && <p className="muted">{hint}</p>}
           <button type="submit" disabled={!!hint}>
             Save

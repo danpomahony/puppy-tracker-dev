@@ -18,12 +18,18 @@ export interface EventDef {
   label: string // button text
   toggles: { key: string; label: string }[] // yes/no details; none = log instantly
   atLeastOne?: boolean // at least one toggle must be ticked before saving
+  noteRequired?: boolean // the note is the entry itself, so it can't be saved empty
   // For events that last a while (like sleep). The button starts one; while one is
   // still open (no end time), the same button shows this label and ends it.
   span?: { endLabel: string }
   // `event` is only passed where the whole entry is known (the history list), so
   // events that last a while can show how long they took.
   summary: (data: Record<string, unknown> | null, event?: EventRecord) => string
+}
+
+// The hint shown while a noteRequired event has no text yet.
+export function missingNote(def: EventDef, note: string): string {
+  return def.noteRequired && !note.trim() ? 'Write a note before saving.' : ''
 }
 
 // PocketBase returns "" for an empty date, so "no end time" can be "", null or missing.

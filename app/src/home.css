@@ -35,9 +35,9 @@ h2 {
   font-size: 1.125rem;
 }
 
-/* A button that starts and ends something (sleep) gets a row of its own. */
+/* A button that starts and ends something (sleep) is twice as wide, so Note fits beside it. */
 .log button.wide {
-  grid-column: 1 / -1;
+  grid-column: span 2;
 }
 
 .sheet {

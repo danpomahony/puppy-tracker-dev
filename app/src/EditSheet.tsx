@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { pb } from './lib/pb'
 import { defFor } from './events/registry'
 import { toDate } from './lib/time'
-import { missingChoice } from './events/types'
+import { missingChoice, missingNote } from './events/types'
 import type { EventRecord } from './events/types'
 import './edit.css'
 
@@ -21,12 +21,13 @@ export default function EditSheet({ event, onClose, onSaved }: Props) {
   const def = defFor(event.type)
   const ref = useRef<HTMLFormElement>(null)
   const [when, setWhen] = useState(toLocalInput(toDate(event.started_at)))
+  const [note, setNote] = useState(event.note ?? '')
   const [until, setUntil] = useState(event.ended_at ? toLocalInput(toDate(event.ended_at)) : '')
   const [flags, setFlags] = useState<Record<string, boolean>>(
     Object.fromEntries(def.toggles.map((t) => [t.key, event.data?.[t.key] === true])),
   )
   const [error, setError] = useState('')
-  const hint = missingChoice(def, flags)
+  const hint = missingChoice(def, flags) || missingNote(def, note)
 
   useEffect(() => {
     ref.current?.scrollIntoView({ block: 'center' })
@@ -41,6 +42,7 @@ export default function EditSheet({ event, onClose, onSaved }: Props) {
     try {
       await pb.collection('events').update(event.id, {
         started_at: new Date(when).toISOString(),
+        note: note.trim(),
         // Only events that last a while have an end time. Empty means still going.
         ...(def.span ? { ended_at: until ? new Date(until).toISOString() : '' } : {}),
         data: { ...event.data, ...flags }, // keeps any fields this version doesn't know about
@@ -86,6 +88,10 @@ export default function EditSheet({ event, onClose, onSaved }: Props) {
           {t.label}
         </label>
       ))}
+      <label>
+        {def.noteRequired ? 'Note' : 'Note (optional)'}
+        <textarea rows={3} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />
+      </label>
       {hint && <p className="muted">{hint}</p>}
       {error && <p className="error">{error}</p>}
       <button type="submit" disabled={!!hint}>

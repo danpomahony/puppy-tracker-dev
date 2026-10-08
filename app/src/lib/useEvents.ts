@@ -80,7 +80,7 @@ export function useEvents() {
   }, [reload])
 
   const log = useCallback(
-    async (type: string, data: Record<string, unknown>) => {
+    async (type: string, data: Record<string, unknown>, note = '') => {
       if (!dog) return
       try {
         await pb.collection('events').create({
@@ -89,6 +89,7 @@ export function useEvents() {
           type,
           started_at: nowIso(),
           logged_by: pb.authStore.record?.id,
+          note: note.trim(),
           data,
           v: 1,
         })
