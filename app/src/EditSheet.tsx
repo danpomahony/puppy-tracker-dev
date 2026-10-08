@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { pb } from './lib/pb'
 import { defFor } from './events/registry'
-import { toDate } from './lib/time'
+import { dayLabel, timeOfDay, toDate, useNow } from './lib/time'
 import { missingChoice, missingNote } from './events/types'
 import type { EventRecord } from './events/types'
 import './edit.css'
@@ -19,6 +19,7 @@ interface Props {
 
 export default function EditSheet({ event, onClose, onSaved }: Props) {
   const def = defFor(event.type)
+  const now = useNow()
   const ref = useRef<HTMLFormElement>(null)
   const [when, setWhen] = useState(toLocalInput(toDate(event.started_at)))
   const [note, setNote] = useState(event.note ?? '')
@@ -27,11 +28,14 @@ export default function EditSheet({ event, onClose, onSaved }: Props) {
     Object.fromEntries(def.toggles.map((t) => [t.key, event.data?.[t.key] === true])),
   )
   const [error, setError] = useState('')
+  const [confirming, setConfirming] = useState(false)
   const hint = missingChoice(def, flags) || missingNote(def, note)
 
+  // Bring the sheet into view when it opens, and again when the delete confirmation
+  // opens or closes, because the sheet changes height and would otherwise stay shifted.
   useEffect(() => {
     ref.current?.scrollIntoView({ block: 'center' })
-  }, [])
+  }, [confirming])
 
   async function save(e: FormEvent) {
     e.preventDefault()
@@ -55,13 +59,13 @@ export default function EditSheet({ event, onClose, onSaved }: Props) {
   }
 
   async function remove() {
-    if (!window.confirm('Delete this entry?')) return
     try {
       await pb.collection('events').delete(event.id)
       onSaved()
       onClose()
     } catch {
       setError("Couldn't delete the entry. Check the connection and try again.")
+      setConfirming(false)
     }
   }
 
@@ -100,9 +104,25 @@ export default function EditSheet({ event, onClose, onSaved }: Props) {
       <button type="button" className="quiet" onClick={onClose}>
         Cancel
       </button>
-      <button type="button" className="danger" onClick={remove}>
-        Delete entry
-      </button>
+      {confirming ? (
+        <div className="confirm" role="alertdialog" aria-label="Confirm delete">
+          <p>Delete “{def.summary(event.data, event)}”?</p>
+          <p className="muted">
+            Logged {dayLabel(toDate(event.started_at), now).toLowerCase()} at {timeOfDay(toDate(event.started_at))}. This can't be undone.
+          </p>
+          <button type="button" className="danger solid" onClick={remove}>
+            Yes, delete it
+          </button>
+          {/* Focus starts on the safe choice, so a stray tap or Enter keeps the entry. */}
+          <button type="button" className="quiet" autoFocus onClick={() => setConfirming(false)}>
+            Keep it
+          </button>
+        </div>
+      ) : (
+        <button type="button" className="danger" onClick={() => setConfirming(true)}>
+          Delete entry
+        </button>
+      )}
     </form>
   )
 }
