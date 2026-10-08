@@ -44,10 +44,12 @@ You need Docker and Node.js.
    ```sh
    cd app
    npm install
-   npm run dev -- --host
+   npm run dev
    ```
 
-   Open http://localhost:5173, or use the machine's network address from a phone on the same Wi-Fi.
+   Open http://localhost:5173.
+
+   To use it from a phone, install [Tailscale](https://tailscale.com) on the host and the phone, then run `tailscale serve --bg 5173`. It prints an HTTPS address on your tailnet, which is what the PWA and offline features need. The app is not exposed to the home network. See [ADR 0002](docs/adr/0002-self-host-at-home-with-https-access.md).
 
 3. Check your changes:
 
