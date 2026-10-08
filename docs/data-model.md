@@ -74,6 +74,10 @@ Both false means she went out and did nothing. That is still a valuable record: 
 
 `started_at` is when she fell asleep. `ended_at` is when she woke up, and is empty while she is still asleep. The Sleep button logs the start. While a sleep is open, the same button reads "Woke up" and fills in `ended_at`. Both times can be corrected afterwards in the edit sheet.
 
+#### Sleep totals
+
+Nothing is stored for totals. The app adds them up from the sleeps. A sleep **day** runs from 5:00 to 5:00 in the phone's local time (a constant in `app/src/lib/sleep.ts`, to become a setting in #53). A sleep counts in full toward the day it **starts** in, even if it runs past 5:00, so a night with a pee trip in the middle is still one day's sleep. A sleep that is still going counts up to now.
+
 ## Example event
 
 ```json

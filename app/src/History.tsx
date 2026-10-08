@@ -2,9 +2,13 @@ import { useState } from 'react'
 import { defFor } from './events/registry'
 import type { EventRecord } from './events/types'
 import { EVENT_LIMIT } from './lib/useEvents'
-import { dayLabel, timeOfDay, toDate, useNow } from './lib/time'
+import { dayStart, nextDayStart, sleepByDay } from './lib/sleep'
+import { dayLabel, duration, timeOfDay, toDate, useNow } from './lib/time'
 import EditSheet from './EditSheet'
 import './history.css'
+
+// One line in the list: a logged event, or a computed daily sleep total.
+type Item = { kind: 'event'; at: number; e: EventRecord } | { kind: 'total'; at: number; start: number; ms: number }
 
 interface Props {
   events: EventRecord[]
@@ -17,15 +21,27 @@ export default function History({ events, loaded, reload }: Props) {
   const [editing, setEditing] = useState<EventRecord | null>(null)
   const now = useNow()
 
-  // Events arrive newest first, so consecutive entries from the same local day
-  // belong together and the days come out newest first too.
-  const days: { key: string; label: string; events: EventRecord[] }[] = []
-  for (const e of events) {
-    const d = toDate(e.started_at)
+  // A finished sleep day gets one computed entry, stamped with the moment the day ended.
+  // It is worked out from the sleeps each time, never stored, so fixing a sleep time fixes
+  // the total. When the list is cut off at EVENT_LIMIT, the oldest sleep day may be missing
+  // some of its sleeps, so it is left out.
+  const oldest = events.at(-1)
+  const firstComplete = events.length >= EVENT_LIMIT && oldest ? nextDayStart(dayStart(toDate(oldest.started_at).getTime())) : 0
+  const totals: Item[] = [...sleepByDay(events, now)]
+    .filter(([start]) => nextDayStart(start) <= now && start >= firstComplete)
+    .map(([start, ms]) => ({ kind: 'total', at: nextDayStart(start), start, ms }))
+
+  // Newest first. Entries from the same local day sit together under one heading.
+  const items: Item[] = [...events.map((e): Item => ({ kind: 'event', at: toDate(e.started_at).getTime(), e })), ...totals].sort(
+    (a, b) => b.at - a.at,
+  )
+  const days: { key: string; label: string; items: Item[] }[] = []
+  for (const item of items) {
+    const d = new Date(item.at)
     const key = d.toDateString()
     const last = days.at(-1)
-    if (last?.key === key) last.events.push(e)
-    else days.push({ key, label: dayLabel(d, now), events: [e] })
+    if (last?.key === key) last.items.push(item)
+    else days.push({ key, label: dayLabel(d, now), items: [item] })
   }
 
   return (
@@ -37,20 +53,36 @@ export default function History({ events, loaded, reload }: Props) {
         <section key={day.key}>
           <h2>{day.label}</h2>
           <ul className="entries">
-            {day.events.map((e) => (
-              <li key={e.id}>
-                <button className="row" onClick={() => setEditing(editing?.id === e.id ? null : e)}>
-                  <span>
-                    {defFor(e.type).summary(e.data, e)}
-                    <small>{e.expand?.logged_by?.name ?? ''}</small>
-                  </span>
-                  <time dateTime={e.started_at}>{timeOfDay(toDate(e.started_at))}</time>
-                </button>
-                {editing?.id === e.id && (
-                  <EditSheet key={e.id} event={e} onClose={() => setEditing(null)} onSaved={reload} />
-                )}
-              </li>
-            ))}
+            {day.items.map((item) => {
+              if (item.kind === 'total') {
+                return (
+                  <li key={`total-${item.start}`} className="total">
+                    <div className="row">
+                      <span>
+                        Sleep total: {duration(item.ms)}
+                        <small>Day starting {new Date(item.start).toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' })}</small>
+                      </span>
+                      <time dateTime={new Date(item.at).toISOString()}>{timeOfDay(new Date(item.at))}</time>
+                    </div>
+                  </li>
+                )
+              }
+              const e = item.e
+              return (
+                <li key={e.id}>
+                  <button className="row" onClick={() => setEditing(editing?.id === e.id ? null : e)}>
+                    <span>
+                      {defFor(e.type).summary(e.data, e)}
+                      <small>{e.expand?.logged_by?.name ?? ''}</small>
+                    </span>
+                    <time dateTime={e.started_at}>{timeOfDay(toDate(e.started_at))}</time>
+                  </button>
+                  {editing?.id === e.id && (
+                    <EditSheet key={e.id} event={e} onClose={() => setEditing(null)} onSaved={reload} />
+                  )}
+                </li>
+              )
+            })}
           </ul>
         </section>
       ))}

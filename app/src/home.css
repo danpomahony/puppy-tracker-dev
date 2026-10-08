@@ -81,6 +81,20 @@ h2 {
   border-radius: 0.5rem;
 }
 
+/* Sleep gets one row of three small tiles, right under the log buttons. */
+.sleep-tiles {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.sleep-tiles div {
+  padding: 0.5rem;
+}
+
+.sleep-tiles dd {
+  font-size: 0.9375rem;
+}
+
 .tiles dt {
   color: var(--muted);
   font-size: 0.875rem;
