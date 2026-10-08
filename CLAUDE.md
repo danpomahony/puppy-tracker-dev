@@ -23,10 +23,10 @@ A shared care and training log for a new puppy. Family members each use the app 
 ## Commands
 
 - Backend: `docker compose up -d --build`. Admin UI at http://localhost:8090/_/
-- App, from `app/`: `npm run dev` (port 5173, strict), `npm run lint`, `npm run build`
+- App, from `app/`: `npm run dev` (port 5173, strict), `npm run lint`, `npm test`, `npm run build`
 - Smoke test: `PB_SUPERUSER_EMAIL=<superuser email> ./scripts/smoke-test.sh` (prompts for the password)
-- Before finishing a change, run lint, build, and the smoke test if the backend or data model changed.
-- There is no unit test runner. `npm run build` runs `tsc -b`, so it is also the type check. The smoke test (bash, curl, jq) is the only automated test. It creates throwaway users and a dog, checks the API rules end to end, then cleans up. CI (`ci.yml`) runs lint and build, then starts the backend, creates a throwaway superuser and runs the smoke test.
+- Before finishing a change, run lint, tests, build, and the smoke test if the backend or data model changed.
+- Unit tests use Vitest and cover the pure logic in `app/src/lib/` and `app/src/events/` (dates, sleep totals, event helpers), in `*.test.ts` files next to the code. `npm test` runs them twice, in `Pacific/Auckland` and `America/New_York`, so a date bug that only shows in one timezone is caught. There are no component tests. `npm run build` runs `tsc -b`, so it is also the type check. The smoke test (bash, curl, jq) tests the API. It creates throwaway users and a dog, checks the API rules end to end, then cleans up. CI (`ci.yml`) runs lint, tests and build, then starts the backend, creates a throwaway superuser and runs the smoke test.
 
 ## How the app fits together
 
