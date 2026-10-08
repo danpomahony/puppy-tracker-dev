@@ -6,5 +6,6 @@ The phone app: Vite, React and TypeScript. See the [project README](../README.md
 npm install
 npm run dev             # http://localhost:5173
 npm run lint
+npm test                # unit tests (Vitest), run in two timezones
 npm run build           # also the type check (tsc -b)
 ```
