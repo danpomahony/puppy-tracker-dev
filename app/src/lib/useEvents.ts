@@ -100,5 +100,18 @@ export function useEvents() {
     [dog, reload],
   )
 
-  return { dog, events, lastAccident, loaded, problem, log, reload }
+  // Ends an event that is still open, such as a sleep, by stamping its end time.
+  const finish = useCallback(
+    async (id: string) => {
+      try {
+        await pb.collection('events').update(id, { ended_at: nowIso() })
+        await reload()
+      } catch {
+        setProblem("Couldn't save that. Check the connection and try again.")
+      }
+    },
+    [reload],
+  )
+
+  return { dog, events, lastAccident, loaded, problem, log, finish, reload }
 }

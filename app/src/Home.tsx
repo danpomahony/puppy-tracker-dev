@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { eventDefs } from './events/registry'
-import { missingChoice } from './events/types'
+import { isOpen, missingChoice } from './events/types'
 import type { EventDef, EventRecord } from './events/types'
 import { pb } from './lib/pb'
 import { ago, toDate, useNow } from './lib/time'
@@ -24,10 +24,11 @@ interface Props {
   lastAccident: EventRecord | null
   loaded: boolean
   log: (type: string, data: Record<string, unknown>) => Promise<void>
+  finish: (id: string) => Promise<void>
 }
 
 // The Log tab: the safety sign, the log buttons and the "time since" tiles.
-export default function Home({ dog, events, lastAccident, loaded, log: logEvent }: Props) {
+export default function Home({ dog, events, lastAccident, loaded, log: logEvent, finish }: Props) {
   const [picking, setPicking] = useState<EventDef | null>(null)
   const [chosen, setChosen] = useState<Record<string, boolean>>({})
   const now = useNow()
@@ -48,6 +49,12 @@ export default function Home({ dog, events, lastAccident, loaded, log: logEvent 
   }
 
   function tap(def: EventDef) {
+    // A button for something that lasts a while ends the open one, if there is one.
+    const open = def.span && events.find((e) => e.type === def.type && isOpen(e))
+    if (open) {
+      void finish(open.id)
+      return
+    }
     if (def.toggles.length === 0) {
       log(def, {})
       return
@@ -68,11 +75,14 @@ export default function Home({ dog, events, lastAccident, loaded, log: logEvent 
       {loaded && dog && <SafetySign since={lastAccident && toDate(lastAccident.started_at)} now={now} />}
 
       <section className="log">
-        {eventDefs.map((def) => (
-          <button key={def.type} disabled={!dog} onClick={() => tap(def)}>
-            {def.label}
-          </button>
-        ))}
+        {eventDefs.map((def) => {
+          const open = def.span && events.some((e) => e.type === def.type && isOpen(e))
+          return (
+            <button key={def.type} className={def.span ? 'wide' : undefined} disabled={!dog} onClick={() => tap(def)}>
+              {open ? def.span?.endLabel : def.label}
+            </button>
+          )
+        })}
       </section>
 
       {picking && (

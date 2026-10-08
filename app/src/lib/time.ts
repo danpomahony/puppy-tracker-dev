@@ -17,6 +17,15 @@ export function ago(ms: number): string {
   return `${d} day${d === 1 ? '' : 's'} ago`
 }
 
+// How long something lasted, for example "1 h 20 min".
+export function duration(ms: number): string {
+  const min = Math.max(0, Math.round(ms / 60000))
+  if (min < 1) return 'under a minute'
+  if (min < 60) return `${min} min`
+  const h = Math.floor(min / 60)
+  return min % 60 === 0 ? `${h} h` : `${h} h ${min % 60} min`
+}
+
 // The time of day an entry happened, for example "3:05 pm".
 export const timeOfDay = (d: Date) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 

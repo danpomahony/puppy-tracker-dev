@@ -9,7 +9,7 @@ import './app-shell.css'
 // Keeping useEvents here, rather than in each screen, means switching tabs is
 // instant and there is only ever one realtime subscription.
 export default function AppShell() {
-  const { dog, events, lastAccident, loaded, problem, log, reload } = useEvents()
+  const { dog, events, lastAccident, loaded, problem, log, finish, reload } = useEvents()
   const screen = useHash() === 'history' ? 'history' : 'log'
 
   // Each screen starts at the top, not wherever the last one was scrolled to.
@@ -24,7 +24,7 @@ export default function AppShell() {
         {screen === 'history' ? (
           <History events={events} loaded={loaded} reload={reload} />
         ) : (
-          <Home dog={dog} events={events} lastAccident={lastAccident} loaded={loaded} log={log} />
+          <Home dog={dog} events={events} lastAccident={lastAccident} loaded={loaded} log={log} finish={finish} />
         )}
       </main>
 
