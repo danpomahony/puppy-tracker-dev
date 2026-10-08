@@ -19,7 +19,6 @@ export default function SafetySign({ since, now }: Props) {
       <p className="safety-sign-header">Safety first</p>
       {since ? (
         <>
-          <p>This household has gone</p>
           <div className="safety-sign-counter">
             {units.map((u) => (
               <div key={u.one}>

@@ -4,7 +4,7 @@ import { isOpen, missingChoice, missingNote } from './events/types'
 import type { EventDef, EventRecord } from './events/types'
 import { pb } from './lib/pb'
 import { dayStart, sleepByDay, sleepStatus } from './lib/sleep'
-import { ago, duration, toDate, useNow } from './lib/time'
+import { agoShort, duration, toDate, useNow } from './lib/time'
 import type { Dog } from './lib/useEvents'
 import SafetySign from './SafetySign'
 import './home.css'
@@ -131,7 +131,19 @@ export default function Home({ dog, events, lastAccident, loaded, log: logEvent,
         </form>
       )}
 
-      <dl className="tiles sleep-tiles">
+      <dl className="tiles tiles-4">
+        {tiles.map((t) => {
+          const hit = events.find(t.match)
+          return (
+            <div key={t.label}>
+              <dt>{t.label}</dt>
+              <dd>{hit ? agoShort(now - toDate(hit.started_at).getTime()) : 'Not yet'}</dd>
+            </div>
+          )
+        })}
+      </dl>
+
+      <dl className="tiles tiles-3">
         <div>
           <dt>{sleeping.asleep ? 'Asleep for' : 'Awake for'}</dt>
           <dd>{sleeping.since === null ? 'No sleep yet' : duration(now - sleeping.since)}</dd>
@@ -144,19 +156,6 @@ export default function Home({ dog, events, lastAccident, loaded, log: logEvent,
           <dt>Yesterday</dt>
           <dd>{sleepTotal(slept.get(yesterday))}</dd>
         </div>
-      </dl>
-
-      <h2>Time since</h2>
-      <dl className="tiles">
-        {tiles.map((t) => {
-          const hit = events.find(t.match)
-          return (
-            <div key={t.label}>
-              <dt>{t.label}</dt>
-              <dd>{hit ? ago(now - toDate(hit.started_at).getTime()) : 'Not yet'}</dd>
-            </div>
-          )
-        })}
       </dl>
     </>
   )

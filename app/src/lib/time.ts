@@ -17,6 +17,16 @@ export function ago(ms: number): string {
   return `${d} day${d === 1 ? '' : 's'} ago`
 }
 
+// A short "time since" for a small tile: "20m ago", "2h 22m ago", "1d 3h ago".
+export function agoShort(ms: number): string {
+  const min = Math.max(0, Math.floor(ms / 60000))
+  if (min < 1) return 'just now'
+  if (min < 60) return `${min}m ago`
+  const h = Math.floor(min / 60)
+  if (h < 24) return `${h}h ${min % 60}m ago`
+  return `${Math.floor(h / 24)}d ${h % 24}h ago`
+}
+
 // How long something lasted, for example "1 h 20 min".
 export function duration(ms: number): string {
   const min = Math.max(0, Math.round(ms / 60000))
