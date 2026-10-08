@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { pb } from './lib/pb'
 import { defFor } from './events/registry'
-import { toDate } from './lib/time'
+import { dayLabel, timeOfDay, toDate } from './lib/time'
 import { missingChoice, missingNote } from './events/types'
 import type { EventRecord } from './events/types'
 import './edit.css'
@@ -103,7 +103,10 @@ export default function EditSheet({ event, onClose, onSaved }: Props) {
       </button>
       {confirming ? (
         <div className="confirm" role="alertdialog" aria-label="Confirm delete">
-          <p>Delete this entry? This can't be undone.</p>
+          <p>Delete “{def.summary(event.data, event)}”?</p>
+          <p className="muted">
+            Logged {dayLabel(toDate(event.started_at), Date.now()).toLowerCase()} at {timeOfDay(toDate(event.started_at))}. This can't be undone.
+          </p>
           <button type="button" className="danger solid" onClick={remove}>
             Yes, delete it
           </button>

@@ -37,5 +37,9 @@
 
 .confirm p {
   margin: 0;
+  overflow-wrap: anywhere; /* a long note shouldn't push the buttons off screen */
+}
+
+.confirm p:first-child {
   font-weight: 600;
 }
