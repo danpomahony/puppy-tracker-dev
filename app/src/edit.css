@@ -23,3 +23,19 @@
   color: var(--danger);
   border: 1px solid var(--danger);
 }
+
+/* The button that actually deletes: filled, so it looks different from the first "Delete entry". */
+.danger.solid {
+  background: var(--danger);
+  color: var(--bg);
+}
+
+.confirm {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.confirm p {
+  margin: 0;
+  font-weight: 600;
+}
