@@ -35,6 +35,11 @@ h2 {
   font-size: 1.125rem;
 }
 
+/* A button that starts and ends something (sleep) gets a row of its own. */
+.log button.wide {
+  grid-column: 1 / -1;
+}
+
 .sheet {
   display: grid;
   gap: 0.75rem;

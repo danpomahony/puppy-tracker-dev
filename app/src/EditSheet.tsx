@@ -21,6 +21,7 @@ export default function EditSheet({ event, onClose, onSaved }: Props) {
   const def = defFor(event.type)
   const ref = useRef<HTMLFormElement>(null)
   const [when, setWhen] = useState(toLocalInput(toDate(event.started_at)))
+  const [until, setUntil] = useState(event.ended_at ? toLocalInput(toDate(event.ended_at)) : '')
   const [flags, setFlags] = useState<Record<string, boolean>>(
     Object.fromEntries(def.toggles.map((t) => [t.key, event.data?.[t.key] === true])),
   )
@@ -33,9 +34,15 @@ export default function EditSheet({ event, onClose, onSaved }: Props) {
 
   async function save(e: FormEvent) {
     e.preventDefault()
+    if (def.span && until && new Date(until) < new Date(when)) {
+      setError('The end time is before the start time. Check both times and try again.')
+      return
+    }
     try {
       await pb.collection('events').update(event.id, {
         started_at: new Date(when).toISOString(),
+        // Only events that last a while have an end time. Empty means still going.
+        ...(def.span ? { ended_at: until ? new Date(until).toISOString() : '' } : {}),
         data: { ...event.data, ...flags }, // keeps any fields this version doesn't know about
       })
       onSaved()
@@ -63,6 +70,12 @@ export default function EditSheet({ event, onClose, onSaved }: Props) {
         When
         <input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} required />
       </label>
+      {def.span && (
+        <label>
+          Ended (leave empty if it is still going)
+          <input type="datetime-local" value={until} onChange={(e) => setUntil(e.target.value)} />
+        </label>
+      )}
       {def.toggles.map((t) => (
         <label key={t.key} className="check">
           <input

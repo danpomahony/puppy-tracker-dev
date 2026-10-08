@@ -27,7 +27,7 @@ Included from day one even with a single dog. Adding a `dog` link to existing ev
 |---|---|---|---|
 | id | text (15 chars) | yes | Generated on the phone, so entries logged offline sync without creating duplicates |
 | dog | relation to `dogs` | yes | |
-| type | text | yes | `feed`, `outside`, `accident`. Defined by the app's event registry (`app/src/events/registry.ts`), not the database, so a new type needs no schema change |
+| type | text | yes | `feed`, `outside`, `accident`, `sleep`. Defined by the app's event registry (`app/src/events/registry.ts`), not the database, so a new type needs no schema change |
 | started_at | date | yes | When it happened. Defaults to now, editable. Stored in UTC, shown in the phone's local time |
 | ended_at | date | no | Only for timed events (optional timing) |
 | logged_by | relation to `users` | yes | Set automatically from the logged-in user |
@@ -65,6 +65,14 @@ Both false means she went out and did nothing. That is still a valuable record: 
 | where | text | no | Room or spot |
 
 `pee` and `tiko` deliberately use the same names as on `outside`, so one query can compare outcomes across both types.
+
+### `sleep`
+
+| `data` field | Type | Required | Notes |
+|---|---|---|---|
+| (none) | | | `data` is `{}` |
+
+`started_at` is when she fell asleep. `ended_at` is when she woke up, and is empty while she is still asleep. The Sleep button logs the start. While a sleep is open, the same button reads "Woke up" and fills in `ended_at`. Both times can be corrected afterwards in the edit sheet.
 
 ## Example event
 
@@ -107,7 +115,7 @@ Any logged-in family member can read, create and edit `events` and `dogs`. Logge
 
 ## Planned, not in the MVP
 
-- Sleep, walk and play event types
+- Walk and play event types
 - `words` collection (the vocabulary library) and a `practice` event type referencing a word
 - Weight and vet records
 - Possible later additions: `pee_count`, outside location, soft delete, households for sharing between families
