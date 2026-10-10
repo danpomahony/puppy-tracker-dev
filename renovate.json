@@ -1,0 +1,42 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "schedule": ["before 9am on monday"],
+  "timezone": "Pacific/Auckland",
+  "labels": ["infra"],
+  "commitMessageTopic": "{{depName}}",
+  "semanticCommits": "enabled",
+  "semanticCommitType": "chore",
+  "semanticCommitScope": "deps",
+  "packageRules": [
+    {
+      "description": "One PR for all minor and patch npm updates",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "npm minor and patch"
+    },
+    {
+      "description": "One PR for all GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "description": "PocketBase can change the schema or API rules, so it never merges without a look",
+      "matchDepNames": ["pocketbase/pocketbase"],
+      "prBodyNotes": [
+        "Before merging: read the PocketBase release notes, check `backend/pb_migrations/` still applies, and run `./scripts/smoke-test.sh`."
+      ]
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "PocketBase version pinned as a build arg in compose.yaml",
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)compose\\.yaml$/"],
+      "matchStrings": ["PB_VERSION:\\s*\"(?<currentValue>[^\"]+)\""],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "pocketbase/pocketbase",
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    }
+  ]
+}
