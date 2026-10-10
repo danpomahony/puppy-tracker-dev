@@ -60,11 +60,31 @@ You need Docker and Node.js.
 
 ## Status and plans
 
-The MVP is working: login, logging feeds, outside trips and accidents, a worksite-style "days since last accident" sign, the Log and History tabs, and editing entries. Work is tracked in GitHub Issues and a Projects board (see [workflow](docs/workflow.md)). Next up:
+The app is in daily use: login, logging feeds, outside trips, accidents, sleep, walks and play, a worksite-style "days since last accident" sign, the Log and History tabs, editing entries, a shared words library, and installation as a PWA over HTTPS.
 
-- HTTPS, so the app can be installed as a PWA and work offline
-- Production infrastructure as code, with a reverse proxy and TLS, tested backups, monitoring and deploys from CI
-- A words library, training practice and insights from the logged data
+## Roadmap
+
+Work is tracked in GitHub Issues and a Projects board (see [workflow](docs/workflow.md)). Each milestone below links to its open issues.
+
+**Now: [production infrastructure](https://github.com/danpomahony/puppy-tracker-dev/issues?q=is%3Aissue+milestone%3A%22Production+infra%22)**. Moving from a dev server on a laptop to a deployed, operated service:
+
+1. Automated dependency updates (Renovate)
+2. The production host provisioned with infrastructure as code
+3. A reverse proxy with automatic TLS
+4. Container images built and published from CI, scanned for vulnerabilities and secrets
+5. Deploys from CI on a version tag, with secrets encrypted using sops and age
+6. Database backups with a restore drill that is actually tested
+7. Monitoring and alerting
+8. End-to-end browser tests (Playwright)
+
+**Next: [training and words](https://github.com/danpomahony/puppy-tracker-dev/issues?q=is%3Aissue+milestone%3A%22Training+and+words%22)**: practice sessions, word history, and suggesting a word's status from recent results.
+
+**Then:**
+- [HTTPS and offline](https://github.com/danpomahony/puppy-tracker-dev/issues?q=is%3Aissue+milestone%3A%22HTTPS+and+offline%22): logging with no signal and syncing later
+- [Insights](https://github.com/danpomahony/puppy-tracker-dev/issues?q=is%3Aissue+milestone%3AInsights): patterns from the logged data, such as the best time to go outside after a meal
+- [Accounts and households](https://github.com/danpomahony/puppy-tracker-dev/issues?q=is%3Aissue+milestone%3A%22Accounts+and+households%22): invites, and more than one dog
+
+Ideas that are not scheduled live in the [Later](https://github.com/danpomahony/puppy-tracker-dev/issues?q=is%3Aissue+milestone%3ALater) milestone, including a Go backend embedding PocketBase.
 
 ## License
 
