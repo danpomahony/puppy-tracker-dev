@@ -4,5 +4,6 @@ all:
       hosts:
         puppy-scratch:
           ansible_host: 192.168.122.10
+          tailscale_hostname: puppy-scratch
           # The scratch VM is rebuilt often and gets a new host key each time.
           ansible_ssh_common_args: "-o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes"

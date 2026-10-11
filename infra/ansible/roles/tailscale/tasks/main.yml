@@ -1,0 +1,69 @@
+# Installs Tailscale and, once the node has joined the tailnet, serves the app over HTTPS.
+# The first join is done by hand (see infra/README.md), because it needs a login or a secret key.
+- name: Download Tailscale's apt signing key
+  ansible.builtin.get_url:
+    url: https://pkgs.tailscale.com/stable/ubuntu/{{ ansible_distribution_release }}.noarmor.gpg
+    dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Add Tailscale's apt repository
+  ansible.builtin.deb822_repository:
+    name: tailscale
+    types: deb
+    uris: https://pkgs.tailscale.com/stable/ubuntu
+    suites: "{{ ansible_distribution_release }}"
+    components: main
+    architectures: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_architecture] }}"
+    signed_by: /usr/share/keyrings/tailscale-archive-keyring.gpg
+    state: present
+  register: tailscale_repo
+
+- name: Refresh the package list if the repository changed
+  ansible.builtin.apt:
+    update_cache: true
+  when: tailscale_repo is changed
+
+- name: Install Tailscale
+  ansible.builtin.apt:
+    name: tailscale
+    state: present
+
+- name: Start Tailscale at boot
+  ansible.builtin.service:
+    name: tailscaled
+    state: started
+    enabled: true
+
+- name: Ask Tailscale whether this node has joined the tailnet
+  ansible.builtin.command: tailscale status --json
+  register: tailscale_status
+  changed_when: false
+  failed_when: false
+
+- name: Work out whether the node is joined
+  ansible.builtin.set_fact:
+    tailscale_joined: "{{ (tailscale_status.stdout | from_json).BackendState | default('') == 'Running' }}"
+  when: tailscale_status.rc == 0 and tailscale_status.stdout | length > 0
+
+- name: Say how to join, if not joined yet
+  ansible.builtin.debug:
+    msg: >-
+      Not joined to the tailnet yet. Run on the host:
+      sudo tailscale up --hostname={{ tailscale_hostname }}
+      then open the address it prints, and run this playbook again.
+  when: not (tailscale_joined | default(false))
+
+- name: Look at the current Tailscale Serve setup
+  ansible.builtin.command: tailscale serve status
+  register: tailscale_serve_status
+  changed_when: false
+  when: tailscale_joined | default(false)
+
+- name: Serve the app over HTTPS
+  ansible.builtin.command: tailscale serve --bg --https=443 {{ tailscale_serve_target }}
+  when:
+    - tailscale_joined | default(false)
+    - tailscale_serve_target not in tailscale_serve_status.stdout
+  changed_when: true

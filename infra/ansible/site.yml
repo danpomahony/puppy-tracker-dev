@@ -7,3 +7,4 @@
   roles:
     - baseline
     - docker
+    - tailscale

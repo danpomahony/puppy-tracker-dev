@@ -102,3 +102,24 @@ ssh deploy@192.168.122.10 'APP_VERSION=local sudo -E docker compose -f compose.p
 The app listens on `127.0.0.1:8080` inside the VM only. From the VM, `curl http://127.0.0.1:8080/api/health` should answer. From this machine it should not connect at all. Tailscale Serve is what exposes it (ADR 0004).
 
 The firewall rate-limits SSH: six connections within 30 seconds from one address get refused for a while. A script that makes many `ssh` or `scp` calls in a row will hit it. Reuse one connection with `-o ControlMaster=auto -o ControlPath=/tmp/cm-%C -o ControlPersist=60`, or wait half a minute.
+
+## Joining a VM to the tailnet
+
+The `tailscale` role installs Tailscale and, once the host has joined, serves the app over HTTPS (ADR 0004). The join is a manual step the first time, because it needs a login:
+
+```sh
+ssh deploy@<vm-address> 'sudo tailscale up --hostname=<node-name>'   # prints a sign-in link
+# open the link in a browser where you are signed in to Tailscale, and approve
+ansible-playbook site.yml    # again, now that it has joined: turns on `tailscale serve`
+```
+
+The node name becomes the address, `https://<node-name>.<tailnet>.ts.net`:
+
+| VM | Node name |
+|---|---|
+| prod | `puppy` (set by the role's default) |
+| scratch | `puppy-scratch` (set in `inventory/scratch.yml`) |
+
+Prod keeps the plain name so its address survives a move to another host. If a machine takes over the name, remove the old node in the Tailscale admin console first, or the new one is called `puppy-1`.
+
+Scratch is rebuilt often, and every rebuild is a new device that needs approving again. When you are finished with a scratch node, delete it in the admin console (Machines, then the node, then Delete). Shutting the VM down only marks it offline. Automatic joining with an auth key waits for encrypted secrets (#25).
