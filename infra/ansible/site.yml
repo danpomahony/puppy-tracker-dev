@@ -1,0 +1,9 @@
+# Configures an Ubuntu host that already exists (see infra/README.md for creating one).
+#   ansible-playbook site.yml                 # all hosts in the inventory
+#   ansible-playbook site.yml --check --diff  # show what would change
+- name: Configure the host
+  hosts: vms
+  become: true
+  roles:
+    - baseline
+    - docker
