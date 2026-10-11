@@ -82,3 +82,23 @@ ansible-playbook -i inventory/prod.yml site.yml
 Prod will hold the family's data, so treat `tofu destroy` here as a restore drill (#23), not a casual command. Test every provisioning change on a fresh scratch VM first.
 
 The OpenTofu state for each environment is a file on this machine (`terraform.tfstate`, ignored by git). Losing prod's state file would leave OpenTofu unaware of the VM. Back it up with the rest of the machine's files until remote state is set up.
+
+## Running the app stack on a VM by hand
+
+Until deploys are automatic (#26), the stack in `compose.prod.yaml` is started by hand. The images are private in GHCR, so a VM cannot pull them without a login. To try a build on scratch, copy it over instead:
+
+```sh
+# build locally, tagged "local"
+R=ghcr.io/danpomahony/puppy-tracker-dev
+docker build -t $R/backend:local --build-arg PB_VERSION=0.40.4 backend
+docker build -t $R/app:local app
+
+# copy to the VM and start it
+docker save $R/backend:local $R/app:local | gzip | ssh deploy@192.168.122.10 'gunzip | sudo docker load'
+scp compose.prod.yaml deploy@192.168.122.10:
+ssh deploy@192.168.122.10 'APP_VERSION=local sudo -E docker compose -f compose.prod.yaml up -d'
+```
+
+The app listens on `127.0.0.1:8080` inside the VM only. From the VM, `curl http://127.0.0.1:8080/api/health` should answer. From this machine it should not connect at all. Tailscale Serve is what exposes it (ADR 0004).
+
+The firewall rate-limits SSH: six connections within 30 seconds from one address get refused for a while. A script that makes many `ssh` or `scp` calls in a row will hit it. Reuse one connection with `-o ControlMaster=auto -o ControlPath=/tmp/cm-%C -o ControlPersist=60`, or wait half a minute.

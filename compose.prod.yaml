@@ -1,0 +1,44 @@
+# Production stack: the published images, run by the prod VM. Local development uses
+# compose.yaml instead. See ADR 0003 and ADR 0004.
+#
+#   APP_VERSION=sha-<commit> docker compose -f compose.prod.yaml up -d
+#
+# APP_VERSION is the image tag for both images: sha-<commit> or a release such as v1.2.3.
+name: puppy
+
+x-common: &common
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  backend:
+    <<: *common
+    image: ghcr.io/danpomahony/puppy-tracker-dev/backend:${APP_VERSION:?set APP_VERSION to an image tag}
+    volumes:
+      - pb_data:/pb_data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8090/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    # Not published. Only the app container below can reach it.
+
+  app:
+    <<: *common
+    image: ghcr.io/danpomahony/puppy-tracker-dev/app:${APP_VERSION:?set APP_VERSION to an image tag}
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      # Loopback only. Tailscale Serve is the way in from the network (ADR 0004).
+      - "127.0.0.1:8080:80"
+
+volumes:
+  pb_data:
