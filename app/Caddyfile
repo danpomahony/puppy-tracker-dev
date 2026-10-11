@@ -1,0 +1,11 @@
+{
+	admin off
+}
+
+:80 {
+	root * /srv
+	encode zstd gzip
+	# Unknown paths fall back to index.html, so the app's own links work on reload.
+	try_files {path} /index.html
+	file_server
+}

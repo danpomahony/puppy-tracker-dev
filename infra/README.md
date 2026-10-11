@@ -40,3 +40,14 @@ The playbook is idempotent: a second run should report `changed=0`. Hosts live i
 Ports that Docker publishes bypass ufw, because Docker writes its own firewall rules. Services that sit behind the reverse proxy should bind to `127.0.0.1` (#22).
 
 Before merging a change to provisioning or to the playbook, test it on a fresh scratch VM: `tofu destroy`, `tofu apply`, then run the playbook against the new machine.
+
+## Container images
+
+`.github/workflows/images.yml` publishes two images to GitHub Container Registry, each for amd64 and arm64:
+
+- `ghcr.io/danpomahony/puppy-tracker-dev/backend`: PocketBase with the migrations inside.
+- `ghcr.io/danpomahony/puppy-tracker-dev/app`: the built app, served by Caddy on port 80.
+
+A merge to `main` publishes `sha-<commit>`. Pushing a version tag such as `v1.2.3` adds that tag to the image already built for the commit, without rebuilding. Tag a commit after its Images run has finished, or the tag job fails and can be re-run.
+
+New GHCR packages are private. Before the prod VM can pull them, either make each package public in its settings (the images hold no secrets) or run `docker login ghcr.io` on the VM with a token that has `read:packages`.
