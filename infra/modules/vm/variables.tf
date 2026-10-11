@@ -54,3 +54,9 @@ variable "pool_path" {
   description = "Directory on the host that holds this VM's disks."
   type        = string
 }
+
+variable "autostart" {
+  description = "Start the VM whenever libvirt starts."
+  type        = bool
+  default     = false
+}

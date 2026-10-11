@@ -1,0 +1,7 @@
+all:
+  children:
+    vms:
+      hosts:
+        puppy-prod:
+          ansible_host: 192.168.122.20
+          ansible_ssh_common_args: "-o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes"
