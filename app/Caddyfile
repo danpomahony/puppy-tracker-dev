@@ -3,9 +3,31 @@
 }
 
 :80 {
-	root * /srv
 	encode zstd gzip
-	# Unknown paths fall back to index.html, so the app's own links work on reload.
-	try_files {path} /index.html
-	file_server
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+	}
+
+	# The API, including PocketBase's realtime stream, goes to the backend.
+	# flush_interval -1 sends each event on as soon as it arrives.
+	handle /api/* {
+		reverse_proxy {$BACKEND_UPSTREAM:backend:8090} {
+			flush_interval -1
+		}
+	}
+
+	# PocketBase's admin UI. Only reachable to people on the tailnet (ADR 0004).
+	handle /_/* {
+		reverse_proxy {$BACKEND_UPSTREAM:backend:8090}
+	}
+
+	handle {
+		root * /srv
+		# Unknown paths fall back to index.html, so the app's own links work on reload.
+		try_files {path} /index.html
+		file_server
+	}
 }

@@ -45,6 +45,7 @@ jobs:
               - 'backend/**'
               - 'scripts/**'
               - 'compose.yaml'
+              - 'compose.prod.yaml'
               - '.github/workflows/**'
 
   app:
@@ -67,6 +68,9 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      # The Caddyfile is not covered by the build, so check that Caddy accepts it.
+      - name: Validate the Caddyfile
+        run: docker run --rm -v "$PWD/Caddyfile:/etc/caddy/Caddyfile:ro" caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile
 
   scripts:
     name: Scripts (shellcheck)
@@ -87,6 +91,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
+
+      - name: Check the production compose file
+        run: APP_VERSION=ci docker compose -f compose.prod.yaml config --quiet
 
       - name: Start PocketBase
         run: docker compose up -d --build backend
