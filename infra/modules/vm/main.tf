@@ -89,11 +89,12 @@ resource "libvirt_volume" "cloudinit" {
 }
 
 resource "libvirt_domain" "this" {
-  name    = var.name
-  type    = "kvm"
-  memory  = var.memory_mib * 1024 # the provider takes KiB
-  vcpu    = var.vcpus
-  running = true
+  name      = var.name
+  type      = "kvm"
+  memory    = var.memory_mib * 1024 # the provider takes KiB
+  vcpu      = var.vcpus
+  running   = true
+  autostart = var.autostart
 
   os = {
     type         = "hvm"
