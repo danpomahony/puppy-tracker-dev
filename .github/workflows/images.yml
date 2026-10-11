@@ -1,0 +1,78 @@
+name: Images
+
+# Builds the container images and publishes them to GitHub Container Registry.
+# A push to main publishes sha-<commit>. A version tag (v1.2.3) re-tags the image
+# already built for that commit, so the image that was tested is the one released.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: images-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: backend
+            context: backend
+            build-args: PB_VERSION=0.40.4
+          - image: app
+            context: app
+            build-args: ""
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}/${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Set up emulation for arm64
+        if: github.ref_type == 'branch'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Build and push the image
+        if: github.ref_type == 'branch'
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          platforms: linux/amd64,linux/arm64
+          build-args: ${{ matrix.build-args }}
+          push: true
+          tags: ${{ env.IMAGE }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+
+      - name: Add the version tag to the existing image
+        if: github.ref_type == 'tag'
+        run: |
+          src="$IMAGE:sha-$GITHUB_SHA"
+          if ! docker buildx imagetools inspect "$src" >/dev/null 2>&1; then
+            echo "No image for commit $GITHUB_SHA yet. Tag a commit on main after its Images run has finished, then re-run this job." >&2
+            exit 1
+          fi
+          docker buildx imagetools create --tag "$IMAGE:$GITHUB_REF_NAME" "$src"
