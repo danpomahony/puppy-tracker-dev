@@ -22,6 +22,16 @@ tofu destroy      # removes the VM, its disks and its storage pool
 
 The VM gets a fixed address on libvirt's `default` network, the `deploy` user with your key and passwordless sudo, key-only SSH, and nothing else. Ansible does the rest.
 
+Scratch does not start by itself and should not stay on. Start it when you need it and shut it off when you stop working on infrastructure, which gives its 2 GB of memory back. Its disk is kept, so this takes seconds:
+
+```sh
+virsh -c qemu:///system start puppy-scratch      # begin work
+virsh -c qemu:///system shutdown puppy-scratch   # done for the day
+virsh -c qemu:///system list --all               # what is running
+```
+
+Use `tofu destroy` instead when you want a clean slate. A shut-off VM keeps whatever state it had, so rebuild before the test that counts. Running `tofu apply` also starts it, because the module sets the VM to running.
+
 After a rebuild the VM has a new host key, so ssh refuses the old one. Run `ssh-keygen -R 192.168.122.10` first.
 
 State files stay on this machine (they are ignored by git). The provider lock file `.terraform.lock.hcl` is committed so everyone uses the same provider build.
