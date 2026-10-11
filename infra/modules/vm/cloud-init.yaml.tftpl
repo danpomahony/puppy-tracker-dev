@@ -1,0 +1,18 @@
+#cloud-config
+# Minimal first-boot setup. Everything else is done by Ansible.
+hostname: ${name}
+manage_etc_hosts: true
+timezone: UTC
+
+users:
+  - name: deploy
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    lock_passwd: true
+    ssh_authorized_keys:
+      - ${ssh_public_key}
+
+# Key-only login, no root login.
+disable_root: true
+ssh_pwauth: false
