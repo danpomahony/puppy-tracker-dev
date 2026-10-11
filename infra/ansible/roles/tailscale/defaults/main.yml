@@ -1,0 +1,6 @@
+# The node's name on the tailnet. It becomes the address: https://<name>.<tailnet>.ts.net
+# Prod uses "puppy" so the address survives a host move (ADR 0004). Scratch overrides it.
+tailscale_hostname: puppy
+
+# Where Tailscale Serve sends HTTPS traffic: Caddy, bound to loopback (compose.prod.yaml).
+tailscale_serve_target: http://127.0.0.1:8080
