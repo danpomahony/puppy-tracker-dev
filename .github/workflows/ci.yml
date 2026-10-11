@@ -30,7 +30,7 @@ jobs:
       backend: ${{ steps.filter.outputs.backend }}
     steps:
       - uses: actions/checkout@v5
-      - uses: dorny/paths-filter@v3.0.2
+      - uses: dorny/paths-filter@v3.0.4
         id: filter
         with:
           # The workflow file is in every list, so a workflow change always runs everything.
