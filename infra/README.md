@@ -85,7 +85,7 @@ The OpenTofu state for each environment is a file on this machine (`terraform.tf
 
 ## Running the app stack on a VM by hand
 
-Until deploys are automatic (#26), the stack in `compose.prod.yaml` is started by hand. The images are private in GHCR, so a VM cannot pull them without a login. To try a build on scratch, copy it over instead:
+Deploys to prod are automatic (see "Deploying a release" below). To try a build on scratch by hand instead: the images are private in GHCR, so a VM cannot pull them without a login. Copy a local build over:
 
 ```sh
 # build locally, tagged "local"
@@ -108,7 +108,7 @@ The firewall rate-limits SSH: six connections within 30 seconds from one address
 The `tailscale` role installs Tailscale and, once the host has joined, serves the app over HTTPS (ADR 0004). The join is a manual step the first time, because it needs a login:
 
 ```sh
-ssh deploy@<vm-address> 'sudo tailscale up --hostname=<node-name>'   # prints a sign-in link
+ssh deploy@<vm-address> 'sudo tailscale up --ssh --hostname=<node-name>'   # prints a sign-in link
 # open the link in a browser where you are signed in to Tailscale, and approve
 ansible-playbook site.yml    # again, now that it has joined: turns on `tailscale serve`
 ```
@@ -123,3 +123,35 @@ The node name becomes the address, `https://<node-name>.<tailnet>.ts.net`:
 Prod keeps the plain name so its address survives a move to another host. If a machine takes over the name, remove the old node in the Tailscale admin console first, or the new one is called `puppy-1`.
 
 Scratch is rebuilt often, and every rebuild is a new device that needs approving again. When you are finished with a scratch node, delete it in the admin console (Machines, then the node, then Delete). Shutting the VM down only marks it offline. Automatic joining with an auth key waits for encrypted secrets (#25).
+
+## Deploying a release
+
+Pushing a version tag runs `.github/workflows/deploy.yml`, which joins the tailnet for the length of the job, copies `compose.prod.yaml` and the scripts to `/opt/puppy` on `puppy`, and runs `deploy.sh` (ADR 0005). The script backs up the data, starts the new version, checks health and version, and goes back to the previous version if a check fails.
+
+```sh
+git tag v0.1.0 <commit-on-main>   # after that commit's Images run has finished
+git push origin v0.1.0
+```
+
+To roll back, run the Deploy workflow by hand (Actions, Deploy, Run workflow) with an earlier tag. To deploy from the VM itself, log in to GHCR there, then run `/opt/puppy/deploy.sh v0.1.0`.
+
+### One-time setup
+
+This part cannot be done from the repo.
+
+1. **Join the VM with SSH enabled.** `sudo tailscale up --ssh --hostname=puppy`. If it joined earlier without `--ssh`, run `sudo tailscale set --ssh`. Then run the Ansible playbook so `deploy` is in the `docker` group and `/opt/puppy` exists.
+2. **Add the tag and rules to the tailnet policy** (admin console, Access controls):
+
+   ```json
+   "tagOwners": { "tag:ci": ["autogroup:admin"], "tag:prod": ["autogroup:admin"] },
+   "grants": [
+     { "src": ["tag:ci"], "dst": ["tag:prod"], "ip": ["22"] }
+   ],
+   "ssh": [
+     { "action": "accept", "src": ["tag:ci"], "dst": ["tag:prod"], "users": ["deploy"] }
+   ]
+   ```
+
+   Tag the prod node `tag:prod` (Machines, `puppy`, Edit ACL tags). Keep your own access rules as they are. Tagging a node removes it from your user, so check your devices can still reach it.
+3. **Create an OAuth client** (Settings, OAuth clients) with the `auth_keys` write scope and the tag `tag:ci`.
+4. **Create the `production` environment** on GitHub (Settings, Environments) and add two secrets to it: `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_SECRET`. Optionally require your approval before a deploy.
