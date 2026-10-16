@@ -51,7 +51,7 @@
   ansible.builtin.debug:
     msg: >-
       Not joined to the tailnet yet. Run on the host:
-      sudo tailscale up --hostname={{ tailscale_hostname }}
+      sudo tailscale up --ssh --hostname={{ tailscale_hostname }}
       then open the address it prints, and run this playbook again.
   when: not (tailscale_joined | default(false))
 

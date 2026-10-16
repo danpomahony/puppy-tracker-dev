@@ -32,3 +32,18 @@
     name: docker
     state: started
     enabled: true
+
+# The deploy user runs docker without sudo, so CI can deploy over Tailscale SSH (ADR 0005).
+- name: Let the deploy user run docker
+  ansible.builtin.user:
+    name: deploy
+    groups: docker
+    append: true
+
+- name: Create the directory the deploy script works from
+  ansible.builtin.file:
+    path: /opt/puppy
+    state: directory
+    owner: deploy
+    group: deploy
+    mode: "0755"

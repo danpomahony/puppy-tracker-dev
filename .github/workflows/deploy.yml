@@ -1,0 +1,119 @@
+name: Deploy
+
+# Deploys a version tag (v1.2.3) to the prod VM. See docs/adr/0005-deploy-from-ci-over-tailscale.md.
+# Rolling back is a manual run of this workflow with an earlier tag.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Version tag to deploy, for example v1.2.3. Use an earlier tag to roll back.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Never run two deploys at once, and never cancel one halfway.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.tag || github.ref_name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+    env:
+      VERSION: ${{ inputs.tag || github.ref_name }}
+      IMAGE_BASE: ghcr.io/${{ github.repository }}
+      VM: deploy@puppy
+    steps:
+      - name: Check the tag looks like a version
+        run: |
+          if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.]+)?$ ]]; then
+            echo "'$VERSION' is not a version tag like v1.2.3." >&2
+            exit 1
+          fi
+
+      # The compose file and scripts must match the version being deployed.
+      - uses: actions/checkout@v5
+        with:
+          ref: refs/tags/${{ env.VERSION }}
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The Images workflow adds the version tag to the image when the tag is pushed.
+      # This job starts at the same moment, so wait for both images to exist.
+      - name: Wait for the images
+        run: |
+          for _ in $(seq 1 40); do
+            missing=0
+            for image in backend app; do
+              docker buildx imagetools inspect "$IMAGE_BASE/$image:$VERSION" >/dev/null 2>&1 || missing=1
+            done
+            if [[ $missing -eq 0 ]]; then
+              echo "Both images for $VERSION are published."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "The images for $VERSION were not published after 10 minutes. Check the Images workflow run for this tag." >&2
+          exit 1
+
+      - name: Join the tailnet
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      # One connection is reused for every command below.
+      - name: Open one SSH connection to the VM
+        run: |
+          mkdir -p ~/.ssh
+          cat > ~/.ssh/config <<'EOF'
+          Host puppy
+            StrictHostKeyChecking accept-new
+            ControlMaster auto
+            ControlPath ~/.ssh/cm-%C
+            ControlPersist 10m
+          EOF
+          ssh -o BatchMode=yes "$VM" true
+
+      - name: Copy the compose file and scripts to the VM
+        run: |
+          scp compose.prod.yaml scripts/deploy.sh scripts/backup-prod.sh "$VM:/opt/puppy/"
+          ssh "$VM" 'chmod +x /opt/puppy/deploy.sh /opt/puppy/backup-prod.sh'
+
+      # The token goes over stdin into a temporary Docker config that is deleted afterwards,
+      # so nothing is stored on the VM and the token dies with this job.
+      - name: Deploy
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh "$VM" "
+            set -euo pipefail
+            export DOCKER_CONFIG=\$(mktemp -d)
+            trap 'rm -rf \"\$DOCKER_CONFIG\"' EXIT
+            docker login ghcr.io -u '$GHCR_USER' --password-stdin
+            /opt/puppy/deploy.sh '$VERSION'
+          "
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### Deploy $VERSION: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "${{ job.status }}" != success ]]; then
+            echo "The VM goes back to the previous version when a check fails. Read the Deploy step log for the reason." >> "$GITHUB_STEP_SUMMARY"
+          fi
