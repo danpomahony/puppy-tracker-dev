@@ -29,8 +29,8 @@ jobs:
       scripts: ${{ steps.filter.outputs.scripts }}
       backend: ${{ steps.filter.outputs.backend }}
     steps:
-      - uses: actions/checkout@v5
-      - uses: dorny/paths-filter@v3.0.4
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4.0.3
         id: filter
         with:
           # The workflow file is in every list, so a workflow change always runs everything.
@@ -58,8 +58,8 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: lts/*
           cache: npm
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       # shellcheck is preinstalled on GitHub's Ubuntu runners.
       - run: shellcheck scripts/*.sh
 
@@ -90,7 +90,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Check the production compose file
         run: APP_VERSION=ci docker compose -f compose.prod.yaml config --quiet
