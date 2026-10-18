@@ -1,4 +1,4 @@
-FROM alpine:3.20
+FROM alpine:3.24
 ARG PB_VERSION
 # Set by BuildKit to amd64 or arm64, so the same file builds for either CPU.
 ARG TARGETARCH
