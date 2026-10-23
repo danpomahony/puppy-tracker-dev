@@ -3,7 +3,7 @@ services:
     build:
       context: ./backend
       args:
-        PB_VERSION: "0.40.4"
+        PB_VERSION: "0.40.6"
     ports:
       - "8090:8090"
     volumes:
