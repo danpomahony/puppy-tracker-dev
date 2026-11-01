@@ -1,5 +1,5 @@
 # The build output is plain files, so build on the runner's own CPU even for an arm64 image.
-FROM --platform=$BUILDPLATFORM node:24-alpine AS build
+FROM --platform=$BUILDPLATFORM node:26-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
